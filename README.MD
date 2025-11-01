@@ -5,3 +5,6 @@ python3 -m venv venv
 
 # Activate venv
 source venv/bin/activate
+
+# Run
+streamlit run main.py
