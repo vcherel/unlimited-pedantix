@@ -36,7 +36,7 @@ def initialize_session_state():
 def fetch_random_title(language):
     """Fetch a random Wikipedia page title."""
     url = f"https://{language}.wikipedia.org/api/rest_v1/page/random/summary"
-    headers = {"User-Agent": "PedantixGame/1.0"}
+    headers = {"User-Agent": "PedantixGame"}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()['title']
@@ -51,7 +51,7 @@ def fetch_page_views(language, title):
         end_str = end_date.strftime("%Y%m%d")
         
         url = f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/{language}.wikipedia/all-access/all-agents/{encoded_title}/daily/{start_str}/{end_str}"
-        headers = {"User-Agent": "PedantixGame/1.0"}
+        headers = {"User-Agent": "PedantixGame"}
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
@@ -72,7 +72,7 @@ def fetch_wikipedia_content(title, language):
         'prop': 'text',
         'redirects': 1
     }
-    headers = {"User-Agent": "PedantixGame/1.0"}
+    headers = {"User-Agent": "PedantixGame"}
     
     response = requests.get(url, params=params, headers=headers)
     response.raise_for_status()
@@ -350,48 +350,34 @@ def handle_guess(guess):
             st.session_state.last_similarity = 0
 
 def main():
-    st.set_page_config(page_title="Pedantix Game", page_icon="🎮", layout="wide")
+    st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
     
     initialize_session_state()
     
-    st.title("🎮 Pedantix - Wikipedia Guessing Game")
-    
     # Language selection
     if st.session_state.language is None:
-        st.markdown("### Choose your language:")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("🇬🇧 English", use_container_width=True):
-                st.session_state.language = 'en'
-                with st.spinner("Loading game..."):
-                    success = load_game('en')
+            if st.button("🇫🇷 Français", use_container_width=True):
+                st.session_state.language = 'fr'
+                with st.spinner("Chargement..."):
+                    success = load_game('fr')
                 if not success:
-                    st.error("Failed to load game. Please try again.")
+                    st.error("Erreur chargement du jeu.")
                     st.session_state.language = None
                 else:
                     st.rerun()
         with col2:
-            if st.button("🇫🇷 Français", use_container_width=True):
-                st.session_state.language = 'fr'
-                with st.spinner("Loading game..."):
-                    success = load_game('fr')
+            if st.button("🇬🇧 English", use_container_width=True):
+                st.session_state.language = 'en'
+                with st.spinner("Chargement..."):
+                    success = load_game('en')
                 if not success:
-                    st.error("Failed to load game. Please try again.")
+                    st.error("Erreur chargement du jeu.")
                     st.session_state.language = None
                 else:
                     st.rerun()
-        
-        st.markdown("---")
-        st.markdown("""
-        ### How to Play:
-        1. Choose your language (English or French)
-        2. Guess words that appear in the hidden Wikipedia article
-        3. If a word appears, all occurrences will be revealed in green
-        4. If a word is semantically similar, you'll get similarity feedback
-        5. Win by guessing the article's title!
-        
-        **Tip:** Press Enter to submit your guess!
-        """)
+
         return
     
     # Game interface
@@ -406,11 +392,7 @@ def main():
             revealed_count = len(st.session_state.revealed)
             total_unique = len(set(w['normalized'] for w in st.session_state.words))
             st.metric("Revealed", f"{revealed_count}/{total_unique}")
-        
-        # Display text
-        st.markdown("### Article Text:")
-        display_text()
-        
+
         # Win condition
         if st.session_state.game_won:
             st.balloons()
@@ -454,6 +436,10 @@ def main():
             with st.expander(f"Guess History ({len(st.session_state.guesses)} guesses)"):
                 for i, g in enumerate(st.session_state.guesses, 1):
                     st.text(f"{i}. {g}")
+        
+        # Display text
+        st.markdown("### Article Text:")
+        display_text()
         
         # New game buttons
         st.markdown("---")
