@@ -1,12 +1,13 @@
-import streamlit as st
-import requests
-from urllib.parse import quote
-import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sentence_transformers import SentenceTransformer
-import numpy as np
 from datetime import datetime, timedelta
+from urllib.parse import quote
 from bs4 import BeautifulSoup
+import streamlit as st
+import numpy as np
 import unicodedata
+import requests
+import re
 
 # Configuration
 MODELS = {
@@ -204,22 +205,32 @@ def compute_similarity(guess, words, model):
         st.error(f"Similarity computation error: {e}")
         return []
 
+def fetch_candidate(language, index):
+    try:
+        title = fetch_random_title(language)
+        print(f"Fetched random title {index}: {title}")
+        views = fetch_page_views(language, title)
+        print(f"Views for '{title}': {views}")
+        return title, views
+    except Exception as e:
+        print(f"Error fetching candidate {index}: {e}")
+        return None
+
 def load_game(language):
     """Load a new game with the selected language."""
     try:        
         # Fetch multiple random titles and get view counts
         candidates = []
-        # TODO: make it parallel
-        for i in range(5):
-            try:
-                title = fetch_random_title(language)
-                print(f"Fetched random title {i+1}: {title}")
-                views = fetch_page_views(language, title)
-                print(f"Views for '{title}': {views}")
-                candidates.append((title, views))
-            except Exception as e:
-                print(f"Error fetching candidate {i+1}: {e}")
-                continue
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            # Submit tasks
+            futures = [executor.submit(fetch_candidate, language, i+1) for i in range(5)]
+            
+            # Collect results as they complete
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    candidates.append(result)
         
         # Pick the most viewed article
         if not candidates:
@@ -350,7 +361,7 @@ def handle_guess(guess):
             st.session_state.last_similarity = 0
 
 def main():
-    st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
+    st.set_page_config(page_title=" Pedantix amélioré", page_icon="🎮", layout="wide")
     
     initialize_session_state()
     
