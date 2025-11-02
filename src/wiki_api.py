@@ -4,11 +4,13 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
-from config import USER_AGENT, MAX_PARAGRAPHS
+from config import MAX_PARAGRAPHS
+
+
+headers = {"User-Agent": "PedantixGame/1.0"}
 
 def fetch_random_title(language):
     url = f"https://{language}.wikipedia.org/api/rest_v1/page/random/summary"
-    headers = {"User-Agent": USER_AGENT}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()['title']
@@ -19,7 +21,6 @@ def fetch_page_views(language, title):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         url = f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/{language}.wikipedia/all-access/all-agents/{encoded_title}/daily/{start_date.strftime('%Y%m%d')}/{end_date.strftime('%Y%m%d')}"
-        headers = {"User-Agent": USER_AGENT}
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             return sum(item.get('views', 0) for item in response.json().get('items', []))
@@ -30,7 +31,6 @@ def fetch_page_views(language, title):
 def fetch_wikipedia_content(title, language):
     url = f"https://{language}.wikipedia.org/w/api.php"
     params = {'action': 'parse', 'format': 'json', 'page': title, 'prop': 'text', 'redirects': 1}
-    headers = {"User-Agent": USER_AGENT}
     response = requests.get(url, params=params, headers=headers)
     response.raise_for_status()
     data = response.json()

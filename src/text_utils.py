@@ -3,7 +3,7 @@ import numpy as np
 import re
 
 
-def normalize_word(word):
+def normalize_word(word: str):
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 

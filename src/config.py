@@ -3,6 +3,5 @@ MODELS = {
     'fr': 'distiluse-base-multilingual-cased-v1'
 }
 
-USER_AGENT = "PedantixGame"
-MAX_PARAGRAPHS = 3
+MAX_PARAGRAPHS = 6
 SIMILARITY_THRESHOLD = 0.4

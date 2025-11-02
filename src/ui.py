@@ -52,7 +52,7 @@ def main():
     st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
     initialize_session_state()
 
-    # 1️⃣ Language selection
+    # Language selection
     if st.session_state.language is None:
         col1, col2 = st.columns(2)
         with col1:
@@ -75,7 +75,7 @@ def main():
                         st.session_state.language = None
         return
 
-    # 2️⃣ Game interface
+    # Game interface
     if st.session_state.article and st.session_state.words:
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
@@ -91,7 +91,7 @@ def main():
         # Win condition
         if st.session_state.game_won:
             st.balloons()
-            st.success(f"🎉 Congratulations! Article: **{st.session_state.article['title']}**")
+            st.success(f"Congratulations! Article: **{st.session_state.article['title']}**")
             st.markdown(f"**Total guesses:** {len(st.session_state.guesses)}")
             st.markdown(f"[View on Wikipedia]({st.session_state.article['url']})")
             if st.button("Play Again"):
@@ -132,24 +132,8 @@ def main():
         st.markdown("### Article Text:")
         display_text()
 
-        # New game / change language buttons
         st.markdown("---")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 New Game (Same Language)", use_container_width=True):
-                with st.spinner("Loading new game..."):
-                    if load_game(st.session_state.language):
-                        st.rerun()
-                    else:
-                        st.error("Failed to load new game.")
-        with col2:
-            if st.button("🌍 Change Language", use_container_width=True):
-                st.session_state.language = None
-                st.rerun()
-
-    else:
-        st.error("Failed to load game. Please select a language.")
-        if st.button("⬅️ Back to Language Selection"):
+        if st.button("🌍 Change Language", use_container_width=True):
             st.session_state.language = None
             st.rerun()
 
