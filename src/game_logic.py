@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, TYPE_CHECKING
 import traceback
 import fasttext
 
@@ -6,6 +9,9 @@ from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_conte
 from text_utils import tokenize_text, words_match, compute_similarity
 from classes import session_state
 from config import NB_ARTICLES
+
+if TYPE_CHECKING:
+    from text_utils import SimilarityResult
 
 
 def fetch_candidate(language):
@@ -53,19 +59,31 @@ def load_game(language):
         return False
 
 def handle_guess(guess: str):
+    """Handle one word guess"""
     guess = guess.strip()
     if not guess:
         return
+
     session_state.guesses.append(guess)
+
+    # Check if the guess matches the article title
+    # TODO: all the words from title must be found to reveal
     if guess.lower() == session_state.article['title'].lower():
         session_state.game_won = True
+        # Reveal all words since the game is won
         session_state.revealed.update(w.normalized for w in session_state.words)
         return
+
+    # Check if the guess matches any individual words
     found = False
     for word_info in session_state.words:
         if words_match(guess, word_info.text):
             session_state.revealed.add(word_info.normalized)
             found = True
+
+    # If no exact match, compute similarity (if model is available)
     if not found and session_state.model:
-        similar = compute_similarity(guess, session_state.words, session_state.model)
-        session_state.last_similarity = similar[0]['similarity'] if similar else 0
+        similar_results: List[SimilarityResult] = compute_similarity(guess, session_state.words, session_state.model)
+        # Store the highest similarity for feedback
+        # TODO: all the similar words should be replaced with the similar word
+        session_state.last_similarity = similar_results[0].similarity if similar_results else 0

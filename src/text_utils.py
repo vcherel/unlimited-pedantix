@@ -1,14 +1,23 @@
 from __future__ import annotations
 
-import traceback
 from typing import TYPE_CHECKING, List
+from dataclasses import dataclass
 from classes import WordInfo
 import unicodedata
 import numpy as np
 import re
 
+from config import SIMILARITY_THRESHOLD
+
 if TYPE_CHECKING:
     import fasttext
+
+
+@dataclass
+class SimilarityResult:
+    word: str
+    similarity: float
+    index: int
 
 
 def normalize_word(word: str) -> str:
@@ -47,27 +56,22 @@ def embed_text(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
     else:
         return np.zeros(model.get_dimension())
 
-def compute_similarity(guess, words: List[WordInfo], model: fasttext.FastText._FastText, threshold=0.4):
-    if not words or model is None:
-        return []
+def compute_similarity(guess_vec: np.ndarray, words: List['WordInfo']) -> List[SimilarityResult]:
+    """Compute similarity between the guess vector and the words from the text"""
+    similarities: List[SimilarityResult] = []
 
-    try:
-        guess_vec = embed_text(guess, model)
-        sims = []
-        for idx, word_info in enumerate(words):
-            if word_info.normalized in getattr(model, 'revealed', set()):
-                continue
+    for idx, word_info in enumerate(words):
+        # Skip words that are marked as already revealed
+        if word_info.normalized in getattr(word_info, 'revealed', set()):
+            continue
 
-            word_vec = word_info.embedding
+        # Compute cosine similarity
+        word_vec = word_info.embedding
+        similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
 
-            similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
-            sims.append({'word': word_info.text, 'similarity': float(similarity), 'index': idx})
+        similarities.append(SimilarityResult(word=word_info.text, similarity=float(similarity), index=idx))
 
-        sims.sort(key=lambda x: x['similarity'], reverse=True)
-        # TODO: better object
-        return [s for s in sims[:3] if s['similarity'] > threshold]
+    similarities.sort(key=lambda x: x.similarity, reverse=True)
 
-    except Exception as e:
-        print(f"Error in compute_similarity: {e}")
-        traceback.print_exc()
-        return []
+    # Return similar words above the threshold
+    return [s for s in similarities if s.similarity > SIMILARITY_THRESHOLD]
