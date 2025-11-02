@@ -1,11 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sentence_transformers import SentenceTransformer
 import streamlit as st
+import fasttext
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from text_utils import tokenize_text, words_match, compute_similarity
-from config import MODELS
-
 
 def initialize_session_state():
     keys = ['language', 'article', 'full_text', 'words', 'revealed', 'guesses', 'model', 'game_won']
@@ -44,7 +42,7 @@ def load_game(language):
         text = extract_first_paragraphs(article['html'])
         if not text or len(text) < 100:
             return False
-        model = SentenceTransformer(MODELS[language])
+        model = fasttext.load_model(f'models/cc.{language}.300.bin')
         words = tokenize_text(text)
         if not words:
             return False

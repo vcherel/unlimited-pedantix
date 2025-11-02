@@ -1,4 +1,5 @@
 import streamlit as st
+import fasttext
 
 from game_logic import initialize_session_state, load_game, handle_guess
 from text_utils import words_match
