@@ -149,7 +149,7 @@ def main():
             if found:
                 st.success(f"✅ Found '{last_guess}'!")
             else:
-                similarity = getattr(session_state, 'last_similarity', 0)
+                similarity = session_state.last_similarity
                 if similarity > 0:
                     st.info(f"🔍 '{last_guess}' is similar to hidden words ({similarity:.2%})")
                 else:

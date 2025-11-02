@@ -1,26 +1,32 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Optional, List, Set, Dict, Any, cast, TYPE_CHECKING
 import streamlit as st
 
 if TYPE_CHECKING:
     import numpy as np
 
+@dataclass
+class SimilarityResult:
+    word: str           # The word
+    similarity: float   # The similarity with the guess
+    index: int          # Index in the text
+
+@dataclass
 class WikipediaPage:
-    """Represents a parsed Wikipedia page."""
-    def __init__(self, title, text, url):
-        self.title: str = title
-        self.text: str = text # Initially, text is the html
-        self.url: str = url
+    title: str
+    text: str  # Initially, text is the HTML
+    url: str
 
-
+@dataclass
 class WordInfo:
-    def __init__(self, text: str, embedding: np.ndarray, normalized: str, start: int, end: int):
-        self.word: str = text
-        self.embedding: np.ndarray = embedding
-        self.normalized: str = normalized
-        self.start: int = start
-        self.end: int = end
+    word: str
+    embedding: np.ndarray
+    normalized: str
+    start: int
+    end: int
+
 
 class SessionState:
     _defaults: Dict[str, Any] = {
@@ -52,5 +58,6 @@ class SessionState:
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
     game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))
     last_similarity: float = property(lambda self: self._get('last_similarity'), lambda self, v: self._set('last_similarity', v))
+
 
 session_state = SessionState()

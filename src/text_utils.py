@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
-from dataclasses import dataclass
-from classes import WordInfo
+
+from classes import WordInfo, SimilarityResult, session_state
 import unicodedata
 import numpy as np
 import re
@@ -11,13 +11,6 @@ from config import SIMILARITY_THRESHOLD
 
 if TYPE_CHECKING:
     import fasttext
-
-
-@dataclass
-class SimilarityResult:
-    word: str           # The word
-    similarity: float   # The similarity with the guess
-    index: int          # Index in the text
 
 
 def normalize_word(word: str) -> str:
@@ -59,13 +52,13 @@ def embed_word(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
     else:
         return np.zeros(model.get_dimension())
 
-def compute_similarity(guess_vec: np.ndarray, words: List['WordInfo']) -> List[SimilarityResult]:
+def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[SimilarityResult]:
     """Compute similarity between the guess vector and the words from the text"""
     similarities: List[SimilarityResult] = []
 
     for idx, word_info in enumerate(words):
         # Skip words that are marked as already revealed
-        if word_info.normalized in getattr(word_info, 'revealed', set()):
+        if word_info.normalized in session_state.revealed:
             continue
 
         # Compute cosine similarity
