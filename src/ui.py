@@ -40,8 +40,9 @@ def display_text():
                 green = 255
             
             color = f"rgb({red},{green},0)"
-            word_length = len(word_info.word)
-            box_width = f"{word_length * 0.6}em"
+            # Box adapts to the guess length
+            guess_length = max(len(word_info.best_guess), len(word_info.word))
+            box_width = f"{guess_length * 0.6}em"
             # Create a box with the guess displayed on top
             html_parts.append(f"""<span style='position: relative; display: inline-block; 
                                             background-color: #2c3e50; width: {box_width}; 
