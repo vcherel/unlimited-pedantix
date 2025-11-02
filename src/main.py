@@ -50,11 +50,11 @@ def main():
 
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("🇫🇷", use_container_width=True, key="btn_fr"):
+                if st.button("🇫🇷", use_container_width=True):
                     selected_language = 'fr'
 
             with col2:
-                if st.button("🇬🇧", use_container_width=True, key="btn_en"):
+                if st.button("🇬🇧", use_container_width=True):
                     selected_language = 'en'
 
         # Spinner
@@ -133,16 +133,33 @@ def main():
 
         st.markdown("---")
         st.markdown("### Make a Guess:")
-        with st.form(key='guess_form', clear_on_submit=True):
-            guess = st.text_input("Type a word:", key="guess_input", label_visibility="collapsed")
-            submitted = st.form_submit_button("Submit Guess", use_container_width=True)  # TODO: Delete button
-            
-            if submitted and guess:
+        
+        def on_guess_change():
+            guess = st.session_state.guess_input
+            if guess:  # Only process if there's actual input
                 if " " in guess:
-                    st.error("Spaces are not allowed in your guess!")
+                    st.session_state.error_msg = "Spaces are not allowed in your guess!"
                 else:
+                    st.session_state.error_msg = None
                     handle_guess(guess)
-                    st.rerun()        
+                # Clear the input after processing
+                st.session_state.guess_input = ""
+
+        # Initialize error message in session state if needed
+        if 'error_msg' not in st.session_state:
+            st.session_state.error_msg = None
+
+        # Text input with on_change callback (triggers on Enter key)
+        st.text_input(
+            "Type a word:", 
+            key="guess_input",
+            label_visibility="collapsed",
+            on_change=on_guess_change
+        )
+
+        # Display error if exists
+        if st.session_state.error_msg:
+            st.error(st.session_state.error_msg)
 
         # Feedback for last guess
         if session_state.guesses:
@@ -182,10 +199,23 @@ def main():
         # Article display
         display_article()
 
-        st.markdown("---")
-        if st.button("Main menu", use_container_width=True):
-            session_state.language = None
-            st.rerun()
+        _, col_center, _ = st.columns([2, 1, 2])
+
+        # Main menu button
+        with col_center:
+            st.markdown("""
+                <style>
+                .stButton > button {
+                    height: 60px !important;
+                }
+                .stButton > button p {
+                    font-size: 25px !important;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            if st.button("Main menu", use_container_width=True):
+                session_state.language = None
+                st.rerun()
 
 
 if __name__ == "__main__":
