@@ -16,16 +16,18 @@ class SimilarityResult:
 @dataclass
 class WikipediaPage:
     title: str
-    text: str  # Initially, text is the HTML
+    text: str       # Initially, text is the HTML of the page, and then the selected
     url: str
 
 @dataclass
 class WordInfo:
     word: str
     embedding: np.ndarray
-    normalized: str
-    start: int
+    normalized: str                     # The word without accent and capital letter
+    start: int                          # Start/End positon of word to place it
     end: int
+    best_guess: Optional[str] = None    # The most similar guess found
+    best_similarity: float = 0.0        # Its similarity score
 
 
 class SessionState:

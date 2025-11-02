@@ -1,50 +1,65 @@
 import streamlit as st
 
+from config import SIMILARITY_THRESHOLD
 from game_logic import load_game, handle_guess
 from text_utils import words_match
 from classes import session_state
 
 
 def display_text():
-    """Display the text with revealed/hidden words."""
-    if not session_state.words or not session_state.article.text:
-        st.warning("No text to display")
+    """Display the article text with revealed/similar words shown"""
+    # TODO: more beautiful boxes
+    if not session_state.words:
         return
     
-    text = session_state.article.text
-    words = session_state.words
-    revealed = session_state.revealed
-    
-    # Build HTML output
+    # Build the display text
     html_parts = []
-    last_pos = 0
+    current_pos = 0
     
-    for word_info in words:
-        # Add text before this word (spaces, punctuation)
-        between = text[last_pos:word_info.start]
-        html_parts.append(between)
+    for word_info in session_state.words:
+        # Add any text before this word
+        html_parts.append(session_state.article.text[current_pos:word_info.start])
         
-        # Add word (revealed or hidden)
-        if word_info.normalized in revealed:
-            html_parts.append(f"<span style='color: #27ae60; font-weight: bold;'>{word_info.word}</span>")
+        # Determine what to show for this word
+        if word_info.normalized in session_state.revealed:
+            # Word is revealed - show the actual word
+            html_parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
+        elif word_info.best_guess:
+            # Word has a similar guess - show the guess with adequate color
+            norm_similarity = (word_info.best_similarity - SIMILARITY_THRESHOLD) / (1 - SIMILARITY_THRESHOLD)
+            norm_similarity = max(0, min(norm_similarity, 1))  # clamp to [0,1]
+
+            if norm_similarity < 0.5:
+                # Red -> Yellow
+                ratio = norm_similarity / 0.5
+                red = 255
+                green = int(255 * ratio)
+            else:
+                # Yellow -> Green
+                ratio = (norm_similarity - 0.5) / 0.5
+                red = int(255 * (1 - ratio))
+                green = 255
+
+            color = f"rgb({red},{green},0)"
+
+            html_parts.append(f"<span style='color: {color}; font-weight: bold;'>{word_info.best_guess}</span>")
         else:
             # Black box - display as inline block with fixed character
             word_length = len(word_info.word)
             boxes = '█' * word_length  # Use block character
             html_parts.append(f"<span style='color: #34495e; background-color: #34495e; user-select: none;'>{boxes}</span>")
         
-        last_pos = word_info.end
+        current_pos = word_info.end
     
-    # Add remaining text
-    html_parts.append(text[last_pos:])
+    # Add any remaining text
+    html_parts.append(session_state.article.text[current_pos:])
     
     # Display with better styling
-    full_html = ''.join(html_parts)
     st.markdown(f"""
     <div style='font-size: 1.1em; line-height: 2.0; padding: 20px; 
                 background-color: #ecf0f1; border-radius: 10px; 
                 font-family: Georgia, serif; white-space: pre-line;'>
-        {full_html}
+        {''.join(html_parts)}
     </div>
     """, unsafe_allow_html=True)
 
@@ -146,14 +161,18 @@ def main():
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
             found = any(words_match(last_guess, w.word) for w in session_state.words)
+            
+            # TODO: remplacer mots même quand c'est trouvé
             if found:
-                st.success(f"✅ Found '{last_guess}'!")
+                st.success(f"✅ {last_guess}")
             else:
                 similarity = session_state.last_similarity
                 if similarity > 0:
-                    st.info(f"🔍 '{last_guess}' is similar to hidden words ({similarity:.2%})")
+                    # Count how many words were updated with this guess
+                    updated_count = sum(1 for w in session_state.words if w.best_guess == last_guess)
+                    st.info(f"🔍 '{last_guess}' replaced {updated_count} word(s)")
                 else:
-                    st.warning(f"❌ '{last_guess}' not found")
+                    st.warning(f"❌ {last_guess}")
 
         # Guess history
         if session_state.guesses:
