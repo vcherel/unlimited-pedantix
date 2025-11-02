@@ -34,7 +34,8 @@ class SessionState:
     _defaults: Dict[str, Any] = {
         'language': None,       # The language we play the game with ('en' or 'fr')
         'article': None,        # The fetched article (WikipediaPage type)
-        'words': [],            # The words of the article (WordInfo type)
+        'article_words': [],    # The words of the article (WordInfo type)
+        'title_words': [],      # The words of the title
         'revealed': set(),      # Set of revealed words
         'guesses': [],          # List of guesses made
         'model': None,          # Fasttext model
@@ -54,7 +55,8 @@ class SessionState:
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
-    words: List['WordInfo'] = property(lambda self: self._get('words'), lambda self, v: self._set('words', v))
+    article_words: List['WordInfo'] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
+    title_words: List['WordInfo'] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
     revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))

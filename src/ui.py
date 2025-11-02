@@ -8,14 +8,11 @@ from classes import session_state
 
 def display_text():
     """Display the article text with revealed/similar words shown"""
-    if not session_state.words:
-        return
-    
     # Build the display text
     html_parts = []
     current_pos = 0
     
-    for word_info in session_state.words:
+    for word_info in session_state.article_words:
         # Add any text before this word
         html_parts.append(session_state.article.text[current_pos:word_info.start])
         
@@ -133,7 +130,7 @@ def main():
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 130vh;
+                height: 140vh;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -171,7 +168,7 @@ def main():
         return
 
     # Game interface
-    if session_state.article and session_state.words:
+    if session_state.article and session_state.article_words:
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
@@ -180,7 +177,7 @@ def main():
             st.metric("Guesses", len(session_state.guesses))
         with col3:
             revealed_count = len(session_state.revealed)
-            total_unique = len(set(w.normalized for w in session_state.words))
+            total_unique = len(set(w.normalized for w in session_state.article_words))
             st.metric("Revealed", f"{revealed_count}/{total_unique}")
 
         # Win condition
@@ -198,7 +195,7 @@ def main():
         st.markdown("### Make a Guess:")
         with st.form(key='guess_form', clear_on_submit=True):
             guess = st.text_input("Type a word:", key="guess_input", label_visibility="collapsed")
-            submitted = st.form_submit_button("Submit Guess", use_container_width=True)
+            submitted = st.form_submit_button("Submit Guess", use_container_width=True)  # TODO: Delete button
             
             if submitted and guess:
                 if " " in guess:
@@ -229,7 +226,7 @@ def main():
                 )
 
             else:
-                found = any(words_match(last_guess, w.word) for w in session_state.words)
+                found = any(words_match(last_guess, w.word) for w in session_state.article_words)
 
                 if found:
                     st.success(f"✅  {last_guess}")
@@ -237,13 +234,12 @@ def main():
                     similarity = session_state.last_similarity
                     if similarity > 0:
                         # Count how many words were updated with this guess
-                        updated_count = sum(1 for w in session_state.words if w.best_guess == last_guess)
+                        updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
                         st.info(f"🔍  {updated_count} nouveaux indices")
                     else:
                         st.warning(f"❌  {last_guess}")
 
         # Article display
-        st.markdown("### Article Text:")
         display_text()
 
         st.markdown("---")

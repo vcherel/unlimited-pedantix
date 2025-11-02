@@ -12,6 +12,7 @@ from config import NB_ARTICLES
 
 if TYPE_CHECKING:
     from embedding_utils import SimilarityResult
+    from classes import WikipediaPage
 
 
 def fetch_candidate(language):
@@ -45,23 +46,23 @@ def load_game(language):
         print(f"\n### {best_title} ###")
 
         # Extract the content
-        article = fetch_wikipedia_content(best_title, language)
+        article: WikipediaPage = fetch_wikipedia_content(best_title, language)
         article.text = extract_first_paragraphs(article.text)
         if not article.text:
             return False
         
         # Tokenize text
         print("Tokenizing text...")
-        model = fasttext.load_model(f'models/cc.{language}.300.bin')
         # TODO: display advancement
-        words = tokenize_text(article.text, model)
-        if not words:
-            return False
+        model = fasttext.load_model(f'models/cc.{language}.300.bin')
+        article_words = tokenize_text(article.text, model)
+        title_words = tokenize_text(article.title, model)
         print("Done.")
         
         # Update session parameters
         session_state.article = article
-        session_state.words = words
+        session_state.article_words = article_words
+        session_state.title_words = title_words
         session_state.revealed = set()
         session_state.guesses = []
         session_state.model = model
@@ -86,24 +87,24 @@ def handle_guess(guess: str):
     if guess == session_state.article.title.lower():
         session_state.game_won = True
         # Reveal all words since the game is won
-        session_state.revealed.update(w.normalized for w in session_state.words)
+        session_state.revealed.update(w.normalized for w in session_state.article_words)
         return
 
     # Check if the guess matches any individual words
-    for word_info in session_state.words:
+    for word_info in session_state.article_words:
         if words_match(guess, word_info.word):
             session_state.revealed.add(word_info.normalized)
 
     # Check similarities
     guess_vec = embed_word(normalize_word(guess), session_state.model)
-    similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.words)
+    similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
 
     # Store the highest similarity for feedback
     session_state.last_similarity = similar_results[0].similarity if similar_results else 0
     
     # Update best guesses for similar words
     for result in similar_results:
-        word_info = session_state.words[result.index]
+        word_info = session_state.article_words[result.index]
         
         # If this guess is better than the current best, update it
         if result.similarity > word_info.best_similarity:
