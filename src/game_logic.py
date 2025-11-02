@@ -42,7 +42,7 @@ def load_game(language):
             return False
         
         best_title = max(candidates, key=lambda x: x[1])[0]
-        print(f"\n### {best_title} ###\n")
+        print(f"\n### {best_title} ###")
 
         # Extract the content
         article = fetch_wikipedia_content(best_title, language)
@@ -51,10 +51,13 @@ def load_game(language):
             return False
         
         # Tokenize text
+        print("Tokenizing text...")
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
+        # TODO: display advancement
         words = tokenize_text(article.text, model)
         if not words:
             return False
+        print("Done.")
         
         # Update session parameters
         session_state.article = article

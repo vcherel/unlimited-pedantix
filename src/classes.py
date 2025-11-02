@@ -36,10 +36,10 @@ class SessionState:
         'article': None,        # The fetched article (WikipediaPage type)
         'words': [],            # The words of the article (WordInfo type)
         'revealed': set(),      # Set of revealed words
-        'guesses': [],          # List of guesses made ; TODO: add something visually to tell the user he already tried this word
+        'guesses': [],          # List of guesses made
         'model': None,          # Fasttext model
         'game_won': False,      # State of the game
-        'last_similarity': 0.0  # Best similarity found with a word in the text ; TODO: remove
+        'last_similarity': 0.0  # Best similarity found with a word in the text
     }
 
     def __init__(self):

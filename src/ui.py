@@ -102,6 +102,7 @@ def main():
                 if st.button("🇫🇷", use_container_width=True, key="btn_fr"):
                     session_state.language = 'fr'
                     # TODO: show where we are in the loading
+                    # TODO: bigger spinner
                     with st.spinner("Chargement..."):
                         print("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
                         if load_game('fr'):
@@ -163,7 +164,6 @@ def main():
             guess = st.text_input("Type a word:", key="guess_input", label_visibility="collapsed")
             submitted = st.form_submit_button("Submit Guess", use_container_width=True)
             
-            # TODO: keep all content in that case
             if submitted and guess:
                 if " " in guess:
                     st.error("Spaces are not allowed in your guess!")

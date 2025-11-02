@@ -93,6 +93,6 @@ def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
             if len(paragraphs) >= max_paragraphs:
                 break
     
-    text = '\n\n'.join(paragraphs)
+    text = '\n'.join(paragraphs)
     print(f"{text}")
     return text
