@@ -43,7 +43,7 @@ def display_text():
     st.markdown(f"""
     <div style='font-size: 1.1em; line-height: 2.0; padding: 20px; 
                 background-color: #ecf0f1; border-radius: 10px; 
-                font-family: Georgia, serif; white-space: pre-wrap;'>
+                font-family: Georgia, serif; white-space: pre-line;'>
         {full_html}
     </div>
     """, unsafe_allow_html=True)
