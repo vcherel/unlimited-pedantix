@@ -19,6 +19,7 @@ def fetch_candidate(language):
     try:
         title = fetch_random_title(language)
         views = fetch_page_views(language, title)
+        print(f"{title} -> {views}")
         return title, views
     
     except Exception as e:
@@ -29,7 +30,6 @@ def fetch_candidate(language):
 def load_game(language):
     """Choose the wikipedia article for the game"""
     try:
-
         # We fetch NB_ARTICLES articles and keep the one with most view
         candidates = []
         with ThreadPoolExecutor(max_workers=NB_ARTICLES) as executor:
@@ -42,7 +42,7 @@ def load_game(language):
             return False
         
         best_title = max(candidates, key=lambda x: x[1])[0]
-        print(f"\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n{best_title}\n")
+        print(f"\n### {best_title} ###\n")
 
         # Extract the content
         article = fetch_wikipedia_content(best_title, language)

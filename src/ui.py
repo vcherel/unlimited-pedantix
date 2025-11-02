@@ -29,18 +29,19 @@ def display_text():
             norm_similarity = max(0, min(norm_similarity, 1))  # clamp to [0,1]
             
             if norm_similarity < 0.5:
-                # Red -> Yellow
+                # Dark Red -> Yellow
                 ratio = norm_similarity / 0.5
-                red = 255
-                green = int(255 * ratio)
+                red_tone = 210
+                red = int(red_tone + (254 - red_tone) * ratio)  # Red goes from 128 (dark) to 255
+                green = int(255 * ratio)      # Green goes from 0 to 255
             else:
                 # Yellow -> Green
                 ratio = (norm_similarity - 0.5) / 0.5
                 red = int(255 * (1 - ratio))
                 green = 255
-            
+
             color = f"rgb({red},{green},0)"
-            # Box adapts to the guess length
+                        # Box adapts to the guess length
             guess_length = max(len(word_info.best_guess), len(word_info.word))
             box_width = f"{guess_length * 0.6}em"
             # Create a box with the guess displayed on top
@@ -102,6 +103,7 @@ def main():
                     session_state.language = 'fr'
                     # TODO: show where we are in the loading
                     with st.spinner("Chargement..."):
+                        print("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
                         if load_game('fr'):
                             st.rerun()
                         else:
@@ -167,33 +169,46 @@ def main():
                     st.error("Spaces are not allowed in your guess!")
                 else:
                     handle_guess(guess)
-                    st.rerun()
+                    st.rerun()        
 
         # Feedback for last guess
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
-            found = any(words_match(last_guess, w.word) for w in session_state.words)
-            
-            # TODO: remplacer mots même quand c'est trouvé
-            if found:
-                st.success(f"✅ {last_guess}")
-            else:
-                similarity = session_state.last_similarity
-                if similarity > 0:
-                    # Count how many words were updated with this guess
-                    updated_count = sum(1 for w in session_state.words if w.best_guess == last_guess)
-                    st.info(f"🔍 '{last_guess}' replaced {updated_count} word(s)")
-                else:
-                    st.warning(f"❌ {last_guess}")
 
-        # Guess history
-        if session_state.guesses:
-            with st.expander(f"Guess History ({len(session_state.guesses)})"):
-                for i, g in enumerate(session_state.guesses, 1):
-                    st.text(f"{i}. {g}")
+            # Check if the word was already proposed (excluding the last entry itself)
+            if session_state.guesses.count(last_guess) > 1:
+               st.markdown(
+                    f"""
+                    <div style="
+                        background-color:#fff3cd;
+                        color:#856404;
+                        padding:10px 15px;
+                        border-radius:5px;
+                        border:1px solid #ffeeba;
+                    ">
+                        ⚠️ <b>{last_guess}</b> a déjà été proposé
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            else:
+                found = any(words_match(last_guess, w.word) for w in session_state.words)
+
+                if found:
+                    st.success(f"✅  {last_guess}")
+                else:
+                    similarity = session_state.last_similarity
+                    if similarity > 0:
+                        # Count how many words were updated with this guess
+                        updated_count = sum(1 for w in session_state.words if w.best_guess == last_guess)
+                        st.info(f"🔍  {updated_count} nouveaux indices")
+                    else:
+                        st.warning(f"❌  {last_guess}")
 
         # Article display
         st.markdown("### Article Text:")
+        # TODO: remplacer mots même quand c'est trouvé
         display_text()
 
         st.markdown("---")
