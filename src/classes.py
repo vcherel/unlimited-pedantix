@@ -17,96 +17,36 @@ class WordInfo:
 
 
 class SessionState:
+    _defaults: Dict[str, Any] = {
+        'language': None,
+        'article': None,
+        'full_text': "",
+        'words': [],
+        'revealed': set(),
+        'guesses': [],
+        'model': None,
+        'game_won': False,
+        'last_similarity': 0.0
+    }
+
     def __init__(self):
-        self._defaults: Dict[str, Any] = {
-            'language': None,
-            'article': None,
-            'full_text': "",
-            'words': [],
-            'revealed': set(),
-            'guesses': [],
-            'model': None,
-            'game_won': False,
-            'last_similarity': 0.0
-        }
-
-        # Initialize Streamlit session state
         for key, value in self._defaults.items():
-            if key not in st.session_state:
-                st.session_state[key] = value
+            st.session_state.setdefault(key, value)
 
-    @property
-    def language(self) -> Optional[str]:
-        return st.session_state.language
+    def _get(self, key: str) -> Any:
+        return st.session_state[key]
 
-    @language.setter
-    def language(self, value: Optional[str]):
-        st.session_state.language = value
+    def _set(self, key: str, value: Any):
+        st.session_state[key] = value
 
-    @property
-    def article(self) -> Optional[Dict[str, Any]]:
-        return st.session_state.article
-
-    @article.setter
-    def article(self, value: Optional[Dict[str, Any]]):
-        st.session_state.article = value
-
-    @property
-    def full_text(self) -> str:
-        return st.session_state.full_text
-
-    @full_text.setter
-    def full_text(self, value: str):
-        st.session_state.full_text = value
-
-    @property
-    def words(self) -> List[WordInfo]:
-        return st.session_state.words
-
-    @words.setter
-    def words(self, value: List[WordInfo]):
-        st.session_state.words = value
-
-    @property
-    def revealed(self) -> set[str]:
-        return cast(set[str], st.session_state.revealed)
-
-    @revealed.setter
-    def revealed(self, value: Set[str]):
-        st.session_state.revealed = value
-
-    @property
-    def guesses(self) -> list[str]:
-        return cast(list[str], st.session_state.guesses)
-
-    @guesses.setter
-    def guesses(self, value: List[str]):
-        st.session_state.guesses = value
-
-    @property
-    def model(self) -> Optional[Any]:
-        return st.session_state.model
-
-    @model.setter
-    def model(self, value: Any):
-        st.session_state.model = value
-
-    @property
-    def game_won(self) -> bool:
-        return st.session_state.game_won
-
-    @game_won.setter
-    def game_won(self, value: bool):
-        st.session_state.game_won = value
-
-    @property
-    def last_similarity(self) -> float:
-        return st.session_state.get('last_similarity', 0.0)
-
-    @last_similarity.setter
-    def last_similarity(self, value: float):
-        # TODO: change
-        st.session_state['last_similarity'] = value
-
+    language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
+    article: Optional[Dict[str, Any]] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
+    full_text: str = property(lambda self: self._get('full_text'), lambda self, v: self._set('full_text', v))
+    words: List['WordInfo'] = property(lambda self: self._get('words'), lambda self, v: self._set('words', v))
+    revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
+    guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
+    model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
+    game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))
+    last_similarity: float = property(lambda self: self._get('last_similarity'), lambda self, v: self._set('last_similarity', v))
 
 session_state = SessionState()
