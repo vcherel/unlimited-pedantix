@@ -1,22 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import streamlit as st
 import fasttext
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from text_utils import tokenize_text, words_match, compute_similarity
+from session_state import session_state
 
-def initialize_session_state():
-    keys = ['language', 'article', 'full_text', 'words', 'revealed', 'guesses', 'model', 'game_won']
-    for key in keys:
-        if key not in st.session_state:
-            if key in ['language', 'article', 'model']:
-                st.session_state[key] = None
-            elif key == 'guesses':
-                st.session_state[key] = []
-            elif key == 'revealed':
-                st.session_state[key] = set()
-            else:
-                st.session_state[key] = ""
 
 def fetch_candidate(language):
     try:
@@ -46,13 +34,13 @@ def load_game(language):
         words = tokenize_text(text)
         if not words:
             return False
-        st.session_state.article = article
-        st.session_state.full_text = text
-        st.session_state.words = words
-        st.session_state.revealed = set()
-        st.session_state.guesses = []
-        st.session_state.model = model
-        st.session_state.game_won = False
+        session_state.article = article
+        session_state.full_text = text
+        session_state.words = words
+        session_state.revealed = set()
+        session_state.guesses = []
+        session_state.model = model
+        session_state.game_won = False
         return True
     except:
         return False
@@ -61,16 +49,16 @@ def handle_guess(guess: str):
     guess = guess.strip()
     if not guess:
         return
-    st.session_state.guesses.append(guess)
-    if guess.lower() == st.session_state.article['title'].lower():
-        st.session_state.game_won = True
-        st.session_state.revealed.update(w['normalized'] for w in st.session_state.words)
+    session_state.guesses.append(guess)
+    if guess.lower() == session_state.article['title'].lower():
+        session_state.game_won = True
+        session_state.revealed.update(w['normalized'] for w in session_state.words)
         return
     found = False
-    for word_info in st.session_state.words:
+    for word_info in session_state.words:
         if words_match(guess, word_info['text']):
-            st.session_state.revealed.add(word_info['normalized'])
+            session_state.revealed.add(word_info['normalized'])
             found = True
-    if not found and st.session_state.model:
-        similar = compute_similarity(guess, st.session_state.words, st.session_state.model)
-        st.session_state.last_similarity = similar[0]['similarity'] if similar else 0
+    if not found and session_state.model:
+        similar = compute_similarity(guess, session_state.words, session_state.model)
+        session_state.last_similarity = similar[0]['similarity'] if similar else 0

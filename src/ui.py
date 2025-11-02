@@ -1,19 +1,19 @@
 import streamlit as st
-import fasttext
 
-from game_logic import initialize_session_state, load_game, handle_guess
+from game_logic import load_game, handle_guess
 from text_utils import words_match
+from session_state import session_state
 
 
 def display_text():
     """Display the text with revealed/hidden words."""
-    if not st.session_state.words or not st.session_state.full_text:
+    if not session_state.words or not session_state.full_text:
         st.warning("No text to display")
         return
     
-    text = st.session_state.full_text
-    words = st.session_state.words
-    revealed = st.session_state.revealed
+    text = session_state.full_text
+    words = session_state.words
+    revealed = session_state.revealed
     
     # Build HTML output
     html_parts = []
@@ -48,55 +48,53 @@ def display_text():
     </div>
     """, unsafe_allow_html=True)
 
-
 def main():
     st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
-    initialize_session_state()
 
     # Language selection
-    if st.session_state.language is None:
+    if session_state.language is None:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🇫🇷", use_container_width=True):
-                st.session_state.language = 'fr'
+                session_state.language = 'fr'
                 with st.spinner("Chargement..."):
                     if load_game('fr'):
                         st.rerun()
                     else:
                         st.error("Erreur chargement du jeu.")
-                        st.session_state.language = None
+                        session_state.language = None
         with col2:
             if st.button("🇬🇧", use_container_width=True):
-                st.session_state.language = 'en'
+                session_state.language = 'en'
                 with st.spinner("Chargement..."):
                     if load_game('en'):
                         st.rerun()
                     else:
                         st.error("Erreur chargement du jeu.")
-                        st.session_state.language = None
+                        session_state.language = None
         return
 
     # Game interface
-    if st.session_state.article and st.session_state.words:
+    if session_state.article and session_state.words:
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            st.markdown(f"### Language: {st.session_state.language.upper()}")
+            st.markdown(f"### Language: {session_state.language.upper()}")
         with col2:
-            st.metric("Guesses", len(st.session_state.guesses))
+            st.metric("Guesses", len(session_state.guesses))
         with col3:
-            revealed_count = len(st.session_state.revealed)
-            total_unique = len(set(w['normalized'] for w in st.session_state.words))
+            revealed_count = len(session_state.revealed)
+            total_unique = len(set(w['normalized'] for w in session_state.words))
             st.metric("Revealed", f"{revealed_count}/{total_unique}")
 
         # Win condition
-        if st.session_state.game_won:
+        if session_state.game_won:
             st.balloons()
-            st.success(f"Congratulations! Article: **{st.session_state.article['title']}**")
-            st.markdown(f"**Total guesses:** {len(st.session_state.guesses)}")
-            st.markdown(f"[View on Wikipedia]({st.session_state.article['url']})")
+            st.success(f"Congratulations! Article: **{session_state.article['title']}**")
+            st.markdown(f"**Total guesses:** {len(session_state.guesses)}")
+            st.markdown(f"[View on Wikipedia]({session_state.article['url']})")
             if st.button("Play Again"):
-                st.session_state.language = None
+                session_state.language = None
                 st.rerun()
             return
 
@@ -111,22 +109,22 @@ def main():
                 st.rerun()
 
         # Feedback for last guess
-        if st.session_state.guesses:
-            last_guess = st.session_state.guesses[-1]
-            found = any(words_match(last_guess, w['text']) for w in st.session_state.words)
+        if session_state.guesses:
+            last_guess = session_state.guesses[-1]
+            found = any(words_match(last_guess, w['text']) for w in session_state.words)
             if found:
                 st.success(f"✅ Found '{last_guess}'!")
             else:
-                similarity = getattr(st.session_state, 'last_similarity', 0)
+                similarity = getattr(session_state, 'last_similarity', 0)
                 if similarity > 0:
                     st.info(f"🔍 '{last_guess}' is similar to hidden words ({similarity:.2%})")
                 else:
                     st.warning(f"❌ '{last_guess}' not found")
 
         # Guess history
-        if st.session_state.guesses:
-            with st.expander(f"Guess History ({len(st.session_state.guesses)})"):
-                for i, g in enumerate(st.session_state.guesses, 1):
+        if session_state.guesses:
+            with st.expander(f"Guess History ({len(session_state.guesses)})"):
+                for i, g in enumerate(session_state.guesses, 1):
                     st.text(f"{i}. {g}")
 
         # Article display
@@ -135,7 +133,7 @@ def main():
 
         st.markdown("---")
         if st.button("🌍 Change Language", use_container_width=True):
-            st.session_state.language = None
+            session_state.language = None
             st.rerun()
 
 
