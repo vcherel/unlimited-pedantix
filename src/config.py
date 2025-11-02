@@ -4,3 +4,17 @@ NB_ARTICLES = 5                 # Number of articles we fetch in total for one g
 NB_DAYS = 7                     # Number of days we will count the views
 MAX_PARAGRAPHS = 10             # Number of paragraphs kept 
 SIMILARITY_THRESHOLD = 0.7      # Minimum similarity to show clue
+
+# Words to exclude at the beginning of wikipedia paragraph
+EXCLUDE_STARTS = [
+    "Vous lisez un",
+    "Cet article est une",
+    "Pour les articles",
+    "modifier",
+    "Cet article ne",
+    "Si vous disposez",
+    "Pour des articles plus généraux",
+    "Pour un article plus général",
+    "Cet article est orphelin",
+    "N.B."
+]

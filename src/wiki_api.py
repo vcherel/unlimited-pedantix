@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
-from config import MAX_PARAGRAPHS, NB_DAYS
+from config import EXCLUDE_STARTS, MAX_PARAGRAPHS, NB_DAYS
 
 
 headers = {"User-Agent": "PedantixGame/1.0"}
@@ -17,7 +17,6 @@ def fetch_random_title(language):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()['title']
-
 
 def fetch_page_views(language, title):
     """Get total page views in the last NB_DAYS days for a Wikipedia page"""
@@ -39,7 +38,6 @@ def fetch_page_views(language, title):
         traceback.print_exc()
         return 0
 
-
 def fetch_wikipedia_content(title, language):
     """Fetch the HTML content of a Wikipedia page"""
     url = f"https://{language}.wikipedia.org/w/api.php"
@@ -59,9 +57,25 @@ def fetch_wikipedia_content(title, language):
         'url': f"https://{language}.wikipedia.org/wiki/{quote(parse_obj['title'])}"
     }
 
+def is_good_paragraph(p):
+    text = p.get_text().strip()
+    word_count = len(text.split())
+    
+    if word_count < 10:
+        return False
+    if p.find_parent("table", class_="infobox"):
+        return False
+    if any(text.lower().startswith(start.lower()) for start in EXCLUDE_STARTS):
+        return False
+    if "redirige ici. Pour" in text:
+        return False
+    if any(a.get_text().strip() == "Écouter" for a in p.find_all("a")):
+        return False
+    
+    return True
 
 def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
-    """Extract clean text from the first few paragraphs of HTML content"""
+    """Extract clean text from the first paragraphs of HTML content"""
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Remove unwanted tags
@@ -70,16 +84,15 @@ def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
     for tag in soup.find_all('a'):
         if tag.get('href', '').startswith('#cite'):
             tag.decompose()
-    paragraphs = []
-
-    # Clean paragraph text
-    for p in soup.find_all('p'):
-        text = re.sub(r'\s+', ' ', re.sub(r'\[\d+\]|\[citation needed\]', '', p.get_text(), flags=re.IGNORECASE)).strip()
-        paragraphs.append(text)
-        if len(paragraphs) >= max_paragraphs:
-            break
     
-    # TODO: clean text
+    paragraphs = []
+    for p in soup.find_all('p'):
+        if is_good_paragraph(p):
+            text = re.sub(r'\s+', ' ', re.sub(r'\[\d+\]|\[citation needed\]', '', p.get_text(), flags=re.IGNORECASE)).strip()
+            paragraphs.append(text)
+            if len(paragraphs) >= max_paragraphs:
+                break
+    
     text = '\n\n'.join(paragraphs)
     print(f"Extracted text : {text}")
     return text
