@@ -7,4 +7,4 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Run
-streamlit run src/ui.py
+streamlit run src/main.py
