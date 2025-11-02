@@ -73,18 +73,13 @@ def display_article():
     title_html = build_display_parts(session_state.title_words, session_state.article.title)
     text_html = build_display_parts(session_state.article_words, session_state.article.text)
     
-    # Display with better styling
+    # Display with better styling - title and text in same box
     st.markdown(f"""
-        <div style='font-size: 1.4em; line-height: 2.2; padding: 20px; 
-                    background-color: #ecf0f1; border-radius: 10px; 
-                    font-family: Georgia, serif; font-weight: bold; 
-                    margin-bottom: 10px; white-space: pre-line;'>
-    {title_html}
-        </div>
-        <div style='font-size: 1.1em; line-height: 2.2; padding: 20px; 
+        <div style='font-size: 1.1em; line-height: 1.8; padding: 16px 20px; 
                     background-color: #ecf0f1; border-radius: 10px; 
                     font-family: Georgia, serif; white-space: pre-line;'>
-    {text_html}
+            <div style='font-size: 1.3em; font-weight: bold; margin: 0 0 8px 0; line-height: 1.3;'>{title_html}</div>
+            <div>{text_html}</div>
         </div>
         """, unsafe_allow_html=True)
 
