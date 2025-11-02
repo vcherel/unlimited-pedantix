@@ -8,13 +8,14 @@ def normalize_word(word: str):
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
-def tokenize_text(text):
+def tokenize_text(text, model):
     pattern = r'\b[\w\'-]+\b'
     words = []
     for match in re.finditer(pattern, text):
         word = match.group()
         if len(word) > 1 or word.isalpha():
-            words.append({'text': word, 'normalized': normalize_word(word), 'start': match.start(), 'end': match.end()})
+            # TODO: Transform to class
+            words.append({'text': word, 'embedding': embed_text(word, model), 'normalized': normalize_word(word), 'start': match.start(), 'end': match.end()})
     return words
 
 def words_match(guess, target):
@@ -44,15 +45,14 @@ def compute_similarity(guess, words, model: fasttext.FastText._FastText, thresho
         return []
 
     try:
-        # TODO: keep embeddings in memory
         guess_vec = embed_text(guess, model)
         sims = []
         for idx, word_info in enumerate(words):
-            # Skip revealed words
             if word_info['normalized'] in getattr(model, 'revealed', set()):
                 continue
 
-            word_vec = embed_text(word_info['text'], model)
+            word_vec = word_info.get('embedding', None)
+
             similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
             sims.append({'word': word_info['text'], 'similarity': float(similarity), 'index': idx})
 

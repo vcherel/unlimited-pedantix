@@ -31,7 +31,7 @@ def load_game(language):
         if not text or len(text) < 100:
             return False
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
-        words = tokenize_text(text)
+        words = tokenize_text(text, model)
         if not words:
             return False
         session_state.article = article
