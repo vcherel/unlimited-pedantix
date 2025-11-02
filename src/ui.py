@@ -53,26 +53,55 @@ def main():
 
     # Language selection
     if session_state.language is None:
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🇫🇷", use_container_width=True):
-                session_state.language = 'fr'
-                # TODO: show where we are in the loading
-                with st.spinner("Chargement..."):
-                    if load_game('fr'):
-                        st.rerun()
-                    else:
-                        st.error("Erreur chargement du jeu.")
-                        session_state.language = None
-        with col2:
-            if st.button("🇬🇧", use_container_width=True):
-                session_state.language = 'en'
-                with st.spinner("Chargement..."):
-                    if load_game('en'):
-                        st.rerun()
-                    else:
-                        st.error("Erreur chargement du jeu.")
-                        session_state.language = None
+        # Add vertical spacing to center on page
+        st.markdown("<div style='margin-top: 20vh;'></div>", unsafe_allow_html=True)
+        
+        # Center the language selection horizontally
+        _, col_center, _ = st.columns([1, 2, 1])
+        
+        with col_center:
+            st.markdown(
+                """
+                <h1 style='text-align: center; margin-bottom: 20px;'>
+                    Choisis une langue pour jouer :
+                </h1>
+                """,
+                unsafe_allow_html=True
+            )
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🇫🇷", use_container_width=True, key="btn_fr"):
+                    session_state.language = 'fr'
+                    # TODO: show where we are in the loading
+                    with st.spinner("Chargement..."):
+                        if load_game('fr'):
+                            st.rerun()
+                        else:
+                            st.error("Erreur chargement du jeu.")
+                            session_state.language = None
+            with col2:
+                if st.button("🇬🇧", use_container_width=True, key="btn_en"):
+                    session_state.language = 'en'
+                    with st.spinner("Chargement..."):
+                        if load_game('en'):
+                            st.rerun()
+                        else:
+                            st.error("Erreur chargement du jeu.")
+                            session_state.language = None
+        
+        # Custom CSS to make buttons much bigger with larger text
+        st.markdown("""
+            <style>
+            .stButton > button {
+                height: 100px !important;
+            }
+            .stButton > button p {
+                font-size: 50px !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
         return
 
     # Game interface
