@@ -186,7 +186,6 @@ def main():
                     """,
                     unsafe_allow_html=True
                 )
-                st.markdown("<br>", unsafe_allow_html=True)
                             
             elif " " in last_guess:
                 st.markdown(
@@ -197,28 +196,21 @@ def main():
                         padding:10px 15px;
                         border-radius:5px;
                         border:1px solid #ffeeba;
-                        margun-bottom:150px;
                     ">
                         ⚠️ Les espaces ne sont pas autorisés
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
-                st.markdown("<br>", unsafe_allow_html=True)
 
             else:
-                found = any(words_match(last_guess, w.word) for w in session_state.article_words)
+                found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))
+                updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
 
-                if found:
-                    st.success(f"✅  {last_guess}")
+                if found_count == 0 and updated_count == 0:
+                    st.error(f"{last_guess} : 🟥")
                 else:
-                    similarity = session_state.last_similarity
-                    if similarity > 0:
-                        # Count how many words were updated with this guess
-                        updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
-                        st.info(f"🔍  {updated_count} nouveaux indices")
-                    else:
-                        st.warning(f"❌  {last_guess}")
+                    st.success(f"{last_guess} : {'🟩' * found_count}{'🟧' * updated_count}")
 
         # Article display
         display_article()
