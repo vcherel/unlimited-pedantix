@@ -53,7 +53,6 @@ def load_game(language):
         
         # Tokenize text
         print("Tokenizing text...")
-        # TODO: display advancement
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
@@ -82,14 +81,6 @@ def handle_guess(guess: str):
 
     session_state.guesses.append(guess)
 
-    # Check if the guess matches the article title
-    # TODO: all the words from title must be found to reveal
-    if guess == session_state.article.title.lower():
-        session_state.game_won = True
-        # Reveal all words since the game is won
-        session_state.revealed.update(w.normalized for w in session_state.article_words)
-        return
-
     # Check if the guess matches any individual words
     for word_info in session_state.article_words:
         if words_match(guess, word_info.word):
@@ -110,3 +101,9 @@ def handle_guess(guess: str):
         if result.similarity > word_info.best_similarity:
             word_info.best_guess = guess
             word_info.best_similarity = result.similarity
+    
+    # Check victory
+    title_words = [w.lower() for w in session_state.article.title.split()]
+    if all(w in session_state.revealed for w in title_words):
+        session_state.game_won = True
+        return

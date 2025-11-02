@@ -127,7 +127,6 @@ def main():
         # Win condition
         if session_state.game_won:
             st.balloons()
-            # TODO: keep game after win
             st.success(f"Bravo ! Article: **{session_state.article.title}**")
             st.markdown(f"**Nombre total d'essais:** {len(session_state.guesses)}")
             st.markdown(f"[Voir sur Wikipédia]({session_state.article.url})")
@@ -172,36 +171,10 @@ def main():
 
             # Check if the word was already proposed (excluding the last entry itself)
             if session_state.guesses.count(last_guess) > 1:
-                st.markdown(
-                    f"""
-                    <div style="
-                        background-color:#fff3cd;
-                        color:#856404;
-                        padding:10px 15px;
-                        border-radius:5px;
-                        border:1px solid #ffeeba;
-                    ">
-                        ⚠️ <b>{last_guess}</b> a déjà été proposé
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                st.warning(f"⚠️ {last_guess} a déjà été proposé")
                             
             elif " " in last_guess:
-                st.markdown(
-                    f"""
-                    <div style="
-                        background-color:#fff3cd;
-                        color:#856404;
-                        padding:10px 15px;
-                        border-radius:5px;
-                        border:1px solid #ffeeba;
-                    ">
-                        ⚠️ Les espaces ne sont pas autorisés
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                st.warning("⚠️ Les espaces ne sont pas autorisés")
 
             else:
                 found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))
@@ -209,6 +182,8 @@ def main():
 
                 if found_count == 0 and updated_count == 0:
                     st.error(f"{last_guess} : 🟥")
+                elif found_count == 0:
+                    st.warning(f"{last_guess} : {'🟧' * updated_count}")
                 else:
                     st.success(f"{last_guess} : {'🟩' * found_count}{'🟧' * updated_count}")
 

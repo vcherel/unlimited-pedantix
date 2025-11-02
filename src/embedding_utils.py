@@ -20,7 +20,6 @@ def normalize_word(word: str) -> str:
 
 def tokenize_text(text, model) -> List[WordInfo]:
     """Transform words to WordInfo objects, computing embeddings"""
-    # TODO: support numbers
     pattern = r'\b[\w\'-]+\b'  # Catch words
     words = []
     for match in re.finditer(pattern, text):
