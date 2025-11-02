@@ -32,7 +32,7 @@ def tokenize_text(text, model) -> List[WordInfo]:
     words = []
     for match in re.finditer(pattern, text):
         word = match.group()
-        if len(word) > 1 or word.isalpha():
+        if word.isalpha():
             words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
     return words
 
