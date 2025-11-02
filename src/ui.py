@@ -133,7 +133,7 @@ def main():
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 120vh;
+                height: 130vh;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -244,7 +244,6 @@ def main():
 
         # Article display
         st.markdown("### Article Text:")
-        # TODO: remplacer mots même quand c'est trouvé
         display_text()
 
         st.markdown("---")

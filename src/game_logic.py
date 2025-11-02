@@ -75,7 +75,7 @@ def load_game(language):
 
 def handle_guess(guess: str):
     """Handle one word guess"""
-    guess = guess.strip()
+    guess = guess.strip().lower()
     if not guess:
         return
 
@@ -83,33 +83,29 @@ def handle_guess(guess: str):
 
     # Check if the guess matches the article title
     # TODO: all the words from title must be found to reveal
-    if guess.lower() == session_state.article.title.lower():
+    if guess == session_state.article.title.lower():
         session_state.game_won = True
         # Reveal all words since the game is won
         session_state.revealed.update(w.normalized for w in session_state.words)
         return
 
     # Check if the guess matches any individual words
-    found = False
     for word_info in session_state.words:
-        # TODO: make words_match between words already normalized
         if words_match(guess, word_info.word):
             session_state.revealed.add(word_info.normalized)
-            found = True
 
-    # If no exact match, compute similarity (if model is available)
-    if not found and session_state.model:
-        guess_vec = embed_word(normalize_word(guess), session_state.model)
-        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.words)
+    # Check similarities
+    guess_vec = embed_word(normalize_word(guess), session_state.model)
+    similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.words)
 
-        # Store the highest similarity for feedback
-        session_state.last_similarity = similar_results[0].similarity if similar_results else 0
+    # Store the highest similarity for feedback
+    session_state.last_similarity = similar_results[0].similarity if similar_results else 0
+    
+    # Update best guesses for similar words
+    for result in similar_results:
+        word_info = session_state.words[result.index]
         
-        # Update best guesses for similar words
-        for result in similar_results:
-            word_info = session_state.words[result.index]
-            
-            # If this guess is better than the current best, update it
-            if result.similarity > word_info.best_similarity:
-                word_info.best_guess = guess.lower()
-                word_info.best_similarity = result.similarity
+        # If this guess is better than the current best, update it
+        if result.similarity > word_info.best_similarity:
+            word_info.best_guess = guess
+            word_info.best_similarity = result.similarity
