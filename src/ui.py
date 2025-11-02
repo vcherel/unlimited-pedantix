@@ -2,7 +2,7 @@ import streamlit as st
 
 from config import SIMILARITY_THRESHOLD
 from game_logic import load_game, handle_guess
-from text_utils import words_match
+from embedding_utils import words_match
 from classes import session_state
 
 

@@ -6,12 +6,12 @@ import traceback
 import fasttext
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
-from text_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
+from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
 from classes import session_state
 from config import NB_ARTICLES
 
 if TYPE_CHECKING:
-    from text_utils import SimilarityResult
+    from embedding_utils import SimilarityResult
 
 
 def fetch_candidate(language):
