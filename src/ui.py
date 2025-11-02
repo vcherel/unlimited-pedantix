@@ -81,6 +81,18 @@ def main():
 
     # Language selection
     if session_state.language is None:
+        # Big buttons
+        st.markdown("""
+            <style>
+            .stButton > button {
+                height: 100px !important;
+            }
+            .stButton > button p {
+                font-size: 50px !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         # Add vertical spacing to center on page
         st.markdown("<div style='margin-top: 20vh;'></div>", unsafe_allow_html=True)
         
@@ -97,40 +109,64 @@ def main():
                 unsafe_allow_html=True
             )
 
+            selected_language = None
+
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🇫🇷", use_container_width=True, key="btn_fr"):
-                    session_state.language = 'fr'
-                    # TODO: show where we are in the loading
-                    # TODO: bigger spinner
-                    with st.spinner("Chargement..."):
-                        print("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
-                        if load_game('fr'):
-                            st.rerun()
-                        else:
-                            st.error("Erreur chargement du jeu.")
-                            session_state.language = None
+                    selected_language = 'fr'
+
             with col2:
                 if st.button("🇬🇧", use_container_width=True, key="btn_en"):
-                    session_state.language = 'en'
-                    with st.spinner("Chargement..."):
-                        if load_game('en'):
-                            st.rerun()
-                        else:
-                            st.error("Erreur chargement du jeu.")
-                            session_state.language = None
-        
-        # Custom CSS to make buttons much bigger with larger text
-        st.markdown("""
+                    selected_language = 'en'
+
+        # Spinner
+        if selected_language:
+            session_state.language = selected_language
+            
+            # Clear the entire page first
+            st.empty()
+            
+            spinner_html = """
             <style>
-            .stButton > button {
-                height: 100px !important;
+            .spinner-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 120vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 9999;
             }
-            .stButton > button p {
-                font-size: 50px !important;
+            .spinner {
+                border: 8px solid #f3f3f3;
+                border-top: 8px solid #3498db;
+                border-radius: 50%;
+                width: 80px;
+                height: 80px;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
             </style>
-        """, unsafe_allow_html=True)
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            """
+            
+            st.markdown(spinner_html, unsafe_allow_html=True)
+            
+            success = load_game(selected_language)
+            
+            if success:
+                st.rerun()
+            else:
+                st.error("Erreur chargement du jeu.")
+                session_state.language = None
         
         return
 

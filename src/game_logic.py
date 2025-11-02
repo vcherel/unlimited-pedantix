@@ -103,7 +103,6 @@ def handle_guess(guess: str):
         similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.words)
 
         # Store the highest similarity for feedback
-        # TODO: Delete last_similarity
         session_state.last_similarity = similar_results[0].similarity if similar_results else 0
         
         # Update best guesses for similar words
