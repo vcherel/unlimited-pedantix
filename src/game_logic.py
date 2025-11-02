@@ -46,19 +46,18 @@ def load_game(language):
 
         # Extract the content
         article = fetch_wikipedia_content(best_title, language)
-        text = extract_first_paragraphs(article['html'])  # TODO: include text in article
-        if not text:
+        article.text = extract_first_paragraphs(article.text)
+        if not article.text:
             return False
         
         # Tokenize text
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
-        words = tokenize_text(text, model)
+        words = tokenize_text(article.text, model)
         if not words:
             return False
         
         # Update session parameters
         session_state.article = article
-        session_state.full_text = text
         session_state.words = words
         session_state.revealed = set()
         session_state.guesses = []
@@ -81,7 +80,7 @@ def handle_guess(guess: str):
 
     # Check if the guess matches the article title
     # TODO: all the words from title must be found to reveal
-    if guess.lower() == session_state.article['title'].lower():
+    if guess.lower() == session_state.article.title.lower():
         session_state.game_won = True
         # Reveal all words since the game is won
         session_state.revealed.update(w.normalized for w in session_state.words)

@@ -6,6 +6,13 @@ import streamlit as st
 if TYPE_CHECKING:
     import numpy as np
 
+class WikipediaPage:
+    """Represents a parsed Wikipedia page."""
+    def __init__(self, title, text, url):
+        self.title: str = title
+        self.text: str = text # Initially, text is the html
+        self.url: str = url
+
 
 class WordInfo:
     def __init__(self, text: str, embedding: np.ndarray, normalized: str, start: int, end: int):
@@ -18,8 +25,7 @@ class WordInfo:
 class SessionState:
     _defaults: Dict[str, Any] = {
         'language': None,       # The language we play the game with ('en' or 'fr')
-        'article': None,        # The fetched article
-        'full_text': "",        # The full text of the article ; TODO: put that in article
+        'article': None,        # The fetched article (WikipediaPage type)
         'words': [],            # The words of the article (WordInfo type)
         'revealed': set(),      # Set of revealed words
         'guesses': [],          # List of guesses made ; TODO: add something visually to tell the user he already tried this word
@@ -39,8 +45,7 @@ class SessionState:
         st.session_state[key] = value
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
-    article: Optional[Dict[str, Any]] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
-    full_text: str = property(lambda self: self._get('full_text'), lambda self, v: self._set('full_text', v))
+    article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
     words: List['WordInfo'] = property(lambda self: self._get('words'), lambda self, v: self._set('words', v))
     revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))

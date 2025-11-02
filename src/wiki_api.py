@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
+from classes import WikipediaPage
 from config import EXCLUDE_STARTS, MAX_PARAGRAPHS, NB_DAYS
 
 
@@ -50,12 +51,11 @@ def fetch_wikipedia_content(title, language):
         raise Exception(f"Page not found: {data['error']['info']}")
     parse_obj = data['parse']
 
-    # TODO: use class
-    return {
-        'title': parse_obj['title'],
-        'html': parse_obj['text']['*'],
-        'url': f"https://{language}.wikipedia.org/wiki/{quote(parse_obj['title'])}"
-    }
+    return WikipediaPage(
+        title=parse_obj['title'],
+        text=parse_obj['text']['*'],
+        url=f"https://{language}.wikipedia.org/wiki/{quote(parse_obj['title'])}"
+        )
 
 def is_good_paragraph(p):
     text = p.get_text().strip()

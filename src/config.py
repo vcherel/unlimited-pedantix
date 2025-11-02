@@ -16,5 +16,6 @@ EXCLUDE_STARTS = [
     "Pour des articles plus généraux",
     "Pour un article plus général",
     "Cet article est orphelin",
+    "Ne pas confondre avec",
     "N.B."
 ]

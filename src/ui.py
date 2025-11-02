@@ -7,11 +7,11 @@ from classes import session_state
 
 def display_text():
     """Display the text with revealed/hidden words."""
-    if not session_state.words or not session_state.full_text:
+    if not session_state.words or not session_state.article.text:
         st.warning("No text to display")
         return
     
-    text = session_state.full_text
+    text = session_state.article.text
     words = session_state.words
     revealed = session_state.revealed
     
@@ -91,9 +91,9 @@ def main():
         # Win condition
         if session_state.game_won:
             st.balloons()
-            st.success(f"Congratulations! Article: **{session_state.article['title']}**")
+            st.success(f"Congratulations! Article: **{session_state.article.title}**")
             st.markdown(f"**Total guesses:** {len(session_state.guesses)}")
-            st.markdown(f"[View on Wikipedia]({session_state.article['url']})")
+            st.markdown(f"[View on Wikipedia]({session_state.article.url})")
             if st.button("Play Again"):
                 session_state.language = None
                 st.rerun()
@@ -101,7 +101,7 @@ def main():
 
         st.markdown("---")
         st.markdown("### Make a Guess:")
-        with st.form(key='guess_form'):  # Keep input on submit
+        with st.form(key='guess_form', clear_on_submit=True):
             guess = st.text_input("Type a word:", key="guess_input", label_visibility="collapsed")
             submitted = st.form_submit_button("Submit Guess", use_container_width=True)
             
