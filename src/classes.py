@@ -47,7 +47,7 @@ class SessionState:
             st.session_state.setdefault(key, value)
 
     def _get(self, key: str) -> Any:
-        return st.session_state[key]
+        return st.session_state.get(key, self._defaults[key])
 
     def _set(self, key: str, value: Any):
         st.session_state[key] = value
@@ -62,4 +62,5 @@ class SessionState:
     last_similarity: float = property(lambda self: self._get('last_similarity'), lambda self, v: self._set('last_similarity', v))
 
 
+# Global instance
 session_state = SessionState()
