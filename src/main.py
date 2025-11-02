@@ -112,27 +112,32 @@ def main():
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            st.markdown(f"### Language: {session_state.language.upper()}")
+            language_map = {
+                "en": "anglais",
+                "fr": "français"
+            }
+            st.markdown(f"### Jeu en {language_map.get(session_state.language, session_state.language)}")
         with col2:
-            st.metric("Guesses", len(session_state.guesses))
+            st.metric("Essais", len(session_state.guesses))
         with col3:
             revealed_count = len(session_state.revealed)
             total_unique = len(set(w.normalized for w in session_state.article_words))
-            st.metric("Revealed", f"{revealed_count}/{total_unique}")
+            st.metric("Progression", f"{revealed_count}/{total_unique}")
 
         # Win condition
         if session_state.game_won:
             st.balloons()
-            st.success(f"Congratulations! Article: **{session_state.article.title}**")
-            st.markdown(f"**Total guesses:** {len(session_state.guesses)}")
-            st.markdown(f"[View on Wikipedia]({session_state.article.url})")
-            if st.button("Play Again"):
+            # TODO: keep game after win
+            st.success(f"Bravo ! Article: **{session_state.article.title}**")
+            st.markdown(f"**Nombre total d'essais:** {len(session_state.guesses)}")
+            st.markdown(f"[Voir sur Wikipédia]({session_state.article.url})")
+            if st.button("Rejouer"):
                 session_state.language = None
                 st.rerun()
             return
 
         st.markdown("---")
-        st.markdown("### Make a Guess:")
+        st.markdown("### Tente ta chance :")
         
         def on_guess_change():
             guess = st.session_state.guess_input
@@ -142,8 +147,20 @@ def main():
                 st.session_state.guess_input = ""
 
         # Text input with on_change callback (triggers on Enter key)
+        st.markdown("""
+            <style>
+            .stTextInput > div > div > input {
+                font-size: 18px;
+                padding: 12px;
+            }
+            .stTextInput {
+                max-width: 300px;
+                margin-top: -20px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
         st.text_input(
-            "Type a word:", 
+            "input", 
             key="guess_input",
             label_visibility="collapsed",
             on_change=on_guess_change
