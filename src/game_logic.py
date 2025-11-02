@@ -6,7 +6,7 @@ import traceback
 import fasttext
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
-from text_utils import tokenize_text, words_match, compute_similarity
+from text_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
 from classes import session_state
 from config import NB_ARTICLES
 
@@ -95,7 +95,9 @@ def handle_guess(guess: str):
 
     # If no exact match, compute similarity (if model is available)
     if not found and session_state.model:
-        similar_results: List[SimilarityResult] = compute_similarity(guess, session_state.words, session_state.model)
+        guess_vec = embed_word(normalize_word(guess), session_state.model)
+        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.words)
+
         # Store the highest similarity for feedback
         # TODO: all the similar words should be replaced with the similar word
         session_state.last_similarity = similar_results[0].similarity if similar_results else 0

@@ -72,13 +72,14 @@ def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
             tag.decompose()
     paragraphs = []
 
-
     # Clean paragraph text
     for p in soup.find_all('p'):
         text = re.sub(r'\s+', ' ', re.sub(r'\[\d+\]|\[citation needed\]', '', p.get_text(), flags=re.IGNORECASE)).strip()
-        if len(text) > 50:
-            paragraphs.append(text)
+        paragraphs.append(text)
         if len(paragraphs) >= max_paragraphs:
             break
-    # TODO: join by \n
-    return ''.join(paragraphs)
+    
+    # TODO: clean text
+    text = '\n\n'.join(paragraphs)
+    print(f"Extracted text : {text}")
+    return text

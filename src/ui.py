@@ -57,6 +57,7 @@ def main():
         with col1:
             if st.button("🇫🇷", use_container_width=True):
                 session_state.language = 'fr'
+                # TODO: show where we are in the loading
                 with st.spinner("Chargement..."):
                     if load_game('fr'):
                         st.rerun()
@@ -132,7 +133,7 @@ def main():
         display_text()
 
         st.markdown("---")
-        if st.button("🌍 Change Language", use_container_width=True):
+        if st.button("Main menu", use_container_width=True):
             session_state.language = None
             st.rerun()
 
