@@ -137,17 +137,9 @@ def main():
         def on_guess_change():
             guess = st.session_state.guess_input
             if guess:  # Only process if there's actual input
-                if " " in guess:
-                    st.session_state.error_msg = "Spaces are not allowed in your guess!"
-                else:
-                    st.session_state.error_msg = None
-                    handle_guess(guess)
+                handle_guess(guess)
                 # Clear the input after processing
                 st.session_state.guess_input = ""
-
-        # Initialize error message in session state if needed
-        if 'error_msg' not in st.session_state:
-            st.session_state.error_msg = None
 
         # Text input with on_change callback (triggers on Enter key)
         st.text_input(
@@ -157,17 +149,13 @@ def main():
             on_change=on_guess_change
         )
 
-        # Display error if exists
-        if st.session_state.error_msg:
-            st.error(st.session_state.error_msg)
-
         # Feedback for last guess
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
 
             # Check if the word was already proposed (excluding the last entry itself)
             if session_state.guesses.count(last_guess) > 1:
-               st.markdown(
+                st.markdown(
                     f"""
                     <div style="
                         background-color:#fff3cd;
@@ -181,6 +169,25 @@ def main():
                     """,
                     unsafe_allow_html=True
                 )
+                st.markdown("<br>", unsafe_allow_html=True)
+                            
+            elif " " in last_guess:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color:#fff3cd;
+                        color:#856404;
+                        padding:10px 15px;
+                        border-radius:5px;
+                        border:1px solid #ffeeba;
+                        margun-bottom:150px;
+                    ">
+                        ⚠️ Les espaces ne sont pas autorisés
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.markdown("<br>", unsafe_allow_html=True)
 
             else:
                 found = any(words_match(last_guess, w.word) for w in session_state.article_words)
