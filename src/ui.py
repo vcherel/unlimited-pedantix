@@ -99,15 +99,19 @@ def main():
                 st.rerun()
             return
 
-        # Guess input
         st.markdown("---")
         st.markdown("### Make a Guess:")
-        with st.form(key='guess_form', clear_on_submit=True):
+        with st.form(key='guess_form'):  # Keep input on submit
             guess = st.text_input("Type a word:", key="guess_input", label_visibility="collapsed")
             submitted = st.form_submit_button("Submit Guess", use_container_width=True)
+            
+            # TODO: keep all content in that case
             if submitted and guess:
-                handle_guess(guess)
-                st.rerun()
+                if " " in guess:
+                    st.error("Spaces are not allowed in your guess!")
+                else:
+                    handle_guess(guess)
+                    st.rerun()
 
         # Feedback for last guess
         if session_state.guesses:

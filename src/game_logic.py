@@ -40,7 +40,9 @@ def load_game(language):
                     candidates.append(result)
         if not candidates:
             return False
+        
         best_title = max(candidates, key=lambda x: x[1])[0]
+        print(f"\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n{best_title}\n")
 
         # Extract the content
         article = fetch_wikipedia_content(best_title, language)
