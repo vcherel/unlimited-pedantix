@@ -2,7 +2,7 @@ import streamlit as st
 
 from game_logic import load_game, handle_guess
 from text_utils import words_match
-from session_state import session_state
+from classes import session_state
 
 
 def display_text():
@@ -21,19 +21,19 @@ def display_text():
     
     for word_info in words:
         # Add text before this word (spaces, punctuation)
-        between = text[last_pos:word_info['start']]
+        between = text[last_pos:word_info.start]
         html_parts.append(between)
         
         # Add word (revealed or hidden)
-        if word_info['normalized'] in revealed:
-            html_parts.append(f"<span style='color: #27ae60; font-weight: bold;'>{word_info['text']}</span>")
+        if word_info.normalized in revealed:
+            html_parts.append(f"<span style='color: #27ae60; font-weight: bold;'>{word_info.text}</span>")
         else:
             # Black box - display as inline block with fixed character
-            word_length = len(word_info['text'])
+            word_length = len(word_info.text)
             boxes = '█' * word_length  # Use block character
             html_parts.append(f"<span style='color: #34495e; background-color: #34495e; user-select: none;'>{boxes}</span>")
         
-        last_pos = word_info['end']
+        last_pos = word_info.end
     
     # Add remaining text
     html_parts.append(text[last_pos:])
@@ -84,7 +84,7 @@ def main():
             st.metric("Guesses", len(session_state.guesses))
         with col3:
             revealed_count = len(session_state.revealed)
-            total_unique = len(set(w['normalized'] for w in session_state.words))
+            total_unique = len(set(w.normalized for w in session_state.words))
             st.metric("Revealed", f"{revealed_count}/{total_unique}")
 
         # Win condition
@@ -111,7 +111,7 @@ def main():
         # Feedback for last guess
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
-            found = any(words_match(last_guess, w['text']) for w in session_state.words)
+            found = any(words_match(last_guess, w.text) for w in session_state.words)
             if found:
                 st.success(f"✅ Found '{last_guess}'!")
             else:

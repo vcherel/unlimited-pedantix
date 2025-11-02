@@ -1,24 +1,31 @@
+from __future__ import annotations
+
+import traceback
+from typing import TYPE_CHECKING, List
+from classes import WordInfo
 import unicodedata
 import numpy as np
-import fasttext
 import re
 
+if TYPE_CHECKING:
+    import fasttext
 
-def normalize_word(word: str):
+
+def normalize_word(word: str) -> str:
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
-def tokenize_text(text, model):
+def tokenize_text(text, model) -> List[WordInfo]:
     pattern = r'\b[\w\'-]+\b'
     words = []
     for match in re.finditer(pattern, text):
         word = match.group()
         if len(word) > 1 or word.isalpha():
-            # TODO: Transform to class
-            words.append({'text': word, 'embedding': embed_text(word, model), 'normalized': normalize_word(word), 'start': match.start(), 'end': match.end()})
+            word_info = WordInfo(word, embed_text(word, model), normalize_word(word), match.start(), match.end())
+            words.append(word_info)
     return words
 
-def words_match(guess, target):
+def words_match(guess, target) -> bool:
     guess_norm, target_norm = normalize_word(guess), normalize_word(target)
     if guess_norm == target_norm:
         return True
@@ -30,7 +37,7 @@ def words_match(guess, target):
             return True
     return False
 
-def embed_text(text:str, model: fasttext.FastText._FastText):
+def embed_text(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
     words = text.split()  # simple tokenization; you can use more sophisticated tokenizer
     vectors = []
     for word in words:
@@ -40,7 +47,7 @@ def embed_text(text:str, model: fasttext.FastText._FastText):
     else:
         return np.zeros(model.get_dimension())
 
-def compute_similarity(guess, words, model: fasttext.FastText._FastText, threshold=0.4):
+def compute_similarity(guess, words: List[WordInfo], model: fasttext.FastText._FastText, threshold=0.4):
     if not words or model is None:
         return []
 
@@ -48,17 +55,19 @@ def compute_similarity(guess, words, model: fasttext.FastText._FastText, thresho
         guess_vec = embed_text(guess, model)
         sims = []
         for idx, word_info in enumerate(words):
-            if word_info['normalized'] in getattr(model, 'revealed', set()):
+            if word_info.normalized in getattr(model, 'revealed', set()):
                 continue
 
-            word_vec = word_info.get('embedding', None)
+            word_vec = word_info.embedding
 
             similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
-            sims.append({'word': word_info['text'], 'similarity': float(similarity), 'index': idx})
+            sims.append({'word': word_info.text, 'similarity': float(similarity), 'index': idx})
 
         sims.sort(key=lambda x: x['similarity'], reverse=True)
+        # TODO: better object
         return [s for s in sims[:3] if s['similarity'] > threshold]
 
     except Exception as e:
-        print("Error:", e)
+        print(f"Error in compute_similarity: {e}")
+        traceback.print_exc()
         return []

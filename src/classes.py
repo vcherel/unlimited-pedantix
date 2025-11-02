@@ -1,20 +1,33 @@
-from typing import Optional, List, Set, Dict, Any, cast
+from __future__ import annotations
+
+from typing import Optional, List, Set, Dict, Any, cast, TYPE_CHECKING
 import streamlit as st
+
+if TYPE_CHECKING:
+    import numpy as np
+
+
+class WordInfo:
+    def __init__(self, text: str, embedding: np.ndarray, normalized: str, start: int, end: int):
+        self.text: str = text
+        self.embedding: np.ndarray = embedding
+        self.normalized: str = normalized
+        self.start: int = start
+        self.end: int = end
 
 
 class SessionState:
     def __init__(self):
-        # Default values with proper types
         self._defaults: Dict[str, Any] = {
-            'language': None,                 # type: Optional[str]
-            'article': None,                  # type: Optional[Dict[str, Any]]
-            'full_text': "",                  # type: str
-            'words': [],                      # type: List[Dict[str, Any]]
-            'revealed': set(),                # type: Set[str]
-            'guesses': [],                    # type: List[str]
-            'model': None,                    # type: Optional[Any]
-            'game_won': False,                # type: bool
-            'last_similarity': 0.0            # type: float
+            'language': None,
+            'article': None,
+            'full_text': "",
+            'words': [],
+            'revealed': set(),
+            'guesses': [],
+            'model': None,
+            'game_won': False,
+            'last_similarity': 0.0
         }
 
         # Initialize Streamlit session state
@@ -47,11 +60,11 @@ class SessionState:
         st.session_state.full_text = value
 
     @property
-    def words(self) -> List[Dict[str, Any]]:
+    def words(self) -> List[WordInfo]:
         return st.session_state.words
 
     @words.setter
-    def words(self, value: List[Dict[str, Any]]):
+    def words(self, value: List[WordInfo]):
         st.session_state.words = value
 
     @property
@@ -92,6 +105,7 @@ class SessionState:
 
     @last_similarity.setter
     def last_similarity(self, value: float):
+        # TODO: change
         st.session_state['last_similarity'] = value
 
 

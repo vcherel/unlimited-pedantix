@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import traceback
 from urllib.parse import quote
 from bs4 import BeautifulSoup
 import requests
@@ -25,7 +26,9 @@ def fetch_page_views(language, title):
         if response.status_code == 200:
             return sum(item.get('views', 0) for item in response.json().get('items', []))
         return 0
-    except:
+    except Exception as e:
+        print(f"Error in load_game: {e}")
+        traceback.print_exc()
         return 0
 
 def fetch_wikipedia_content(title, language):
