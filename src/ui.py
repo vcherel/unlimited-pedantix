@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import List, TYPE_CHECKING 
 import streamlit as st
 
 from config import SIMILARITY_THRESHOLD
@@ -5,73 +8,85 @@ from game_logic import load_game, handle_guess
 from embedding_utils import words_match
 from classes import session_state
 
+if TYPE_CHECKING:
+    from classes import WordInfo
 
-def display_text():
+
+def display_article():
     """Display the article text with revealed/similar words shown"""
-    # Build the display text
-    html_parts = []
-    current_pos = 0
     
-    for word_info in session_state.article_words:
-        # Add any text before this word
-        html_parts.append(session_state.article.text[current_pos:word_info.start])
+    def build_display_parts(word_list: List[WordInfo], source_text):
+        """Build HTML parts for displaying text with revealed/similar words"""
+        parts = []
+        current_pos = 0
         
-        # Determine what to show for this word
-        if word_info.normalized in session_state.revealed:
-            # Word is revealed - show the actual word (no box)
-            html_parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
-        elif word_info.best_guess:
-            # Word has a similar guess - show the guess on top of the box
-            norm_similarity = (word_info.best_similarity - SIMILARITY_THRESHOLD) / (1 - SIMILARITY_THRESHOLD)
-            norm_similarity = max(0, min(norm_similarity, 1))  # clamp to [0,1]
+        for word_info in word_list:
+            # Add any text before this word
+            parts.append(source_text[current_pos:word_info.start])
             
-            if norm_similarity < 0.5:
-                # Dark Red -> Yellow
-                ratio = norm_similarity / 0.5
-                red_tone = 210
-                red = int(red_tone + (254 - red_tone) * ratio)  # Red goes from 128 (dark) to 255
-                green = int(255 * ratio)      # Green goes from 0 to 255
-            else:
-                # Yellow -> Green
-                ratio = (norm_similarity - 0.5) / 0.5
-                red = int(255 * (1 - ratio))
-                green = 255
-
-            color = f"rgb({red},{green},0)"
-                        # Box adapts to the guess length
-            guess_length = max(len(word_info.best_guess), len(word_info.word))
-            box_width = f"{guess_length * 0.6}em"
-            # Create a box with the guess displayed on top
-            html_parts.append(f"""<span style='position: relative; display: inline-block; 
+            # Determine what to show for this word
+            if word_info.normalized in session_state.revealed:
+                # Word is revealed - show the actual word (no box)
+                parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
+            elif word_info.best_guess:
+                # Word has a similar guess - show the guess on top of the box
+                norm_similarity = (word_info.best_similarity - SIMILARITY_THRESHOLD) / (1 - SIMILARITY_THRESHOLD)
+                norm_similarity = max(0, min(norm_similarity, 1))  # clamp to [0,1]
+                if norm_similarity < 0.5:
+                    # Dark Red -> Yellow
+                    ratio = norm_similarity / 0.5
+                    red_tone = 210
+                    red = int(red_tone + (254 - red_tone) * ratio)
+                    green = int(255 * ratio)
+                else:
+                    # Yellow -> Green
+                    ratio = (norm_similarity - 0.5) / 0.5
+                    red = int(255 * (1 - ratio))
+                    green = 255
+                color = f"rgb({red},{green},0)"
+                # Box adapts to the guess length
+                guess_length = max(len(word_info.best_guess), len(word_info.word))
+                box_width = f"{guess_length * 0.6}em"
+                # Create a box with the guess displayed on top
+                parts.append(f"""<span style='position: relative; display: inline-block; 
                                             background-color: #2c3e50; width: {box_width}; 
                                             height: 1.2em; border-radius: 4px; vertical-align: middle; 
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
-                <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
-                             color: {color}; font-weight: bold; white-space: nowrap; font-size: 0.85em;'>{word_info.best_guess}</span>
-            </span>""")
-        else:
-            # Beautiful black box
-            word_length = len(word_info.word)
-            # Use approximate character width to size the box
-            box_width = f"{word_length * 0.6}em"
-            html_parts.append(f"""<span style='display: inline-block; background-color: #2c3e50; 
+                    <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
+                                 color: {color}; font-weight: bold; white-space: nowrap; font-size: 0.85em;'>{word_info.best_guess}</span>
+                </span>""")
+            else:
+                # Beautiful black box
+                word_length = len(word_info.word)
+                box_width = f"{word_length * 0.6}em"
+                parts.append(f"""<span style='display: inline-block; background-color: #2c3e50; 
                                             width: {box_width}; height: 1.2em; border-radius: 4px; 
                                             vertical-align: middle; 
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'></span>""")
+            current_pos = word_info.end
         
-        current_pos = word_info.end
+        # Add any remaining text
+        parts.append(source_text[current_pos:])
+        return ''.join(parts)
     
-    # Add any remaining text
-    html_parts.append(session_state.article.text[current_pos:])
+    # Build title and text displays
+    title_html = build_display_parts(session_state.title_words, session_state.article.title)
+    text_html = build_display_parts(session_state.article_words, session_state.article.text)
     
     # Display with better styling
     st.markdown(f"""
-    <div style='font-size: 1.1em; line-height: 2.2; padding: 20px; 
-                background-color: #ecf0f1; border-radius: 10px; 
-                font-family: Georgia, serif; white-space: pre-line;'>
-        {''.join(html_parts)}
-    </div>
-    """, unsafe_allow_html=True)
+        <div style='font-size: 1.4em; line-height: 2.2; padding: 20px; 
+                    background-color: #ecf0f1; border-radius: 10px; 
+                    font-family: Georgia, serif; font-weight: bold; 
+                    margin-bottom: 10px; white-space: pre-line;'>
+    {title_html}
+        </div>
+        <div style='font-size: 1.1em; line-height: 2.2; padding: 20px; 
+                    background-color: #ecf0f1; border-radius: 10px; 
+                    font-family: Georgia, serif; white-space: pre-line;'>
+    {text_html}
+        </div>
+        """, unsafe_allow_html=True)
 
 def main():
     st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
@@ -240,7 +255,7 @@ def main():
                         st.warning(f"❌  {last_guess}")
 
         # Article display
-        display_text()
+        display_article()
 
         st.markdown("---")
         if st.button("Main menu", use_container_width=True):
