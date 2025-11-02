@@ -15,26 +15,29 @@ if TYPE_CHECKING:
 
 @dataclass
 class SimilarityResult:
-    word: str
-    similarity: float
-    index: int
+    word: str           # The word
+    similarity: float   # The similarity with the guess
+    index: int          # Index in the text
 
 
 def normalize_word(word: str) -> str:
+    """Put word to normalized format (no accent, no capital letter)"""
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
 def tokenize_text(text, model) -> List[WordInfo]:
-    pattern = r'\b[\w\'-]+\b'
+    """Transform words to WordInfo objects, computing embeddings"""
+    # TODO: support numbers
+    pattern = r'\b[\w\'-]+\b'  # Catch words
     words = []
     for match in re.finditer(pattern, text):
         word = match.group()
         if len(word) > 1 or word.isalpha():
-            word_info = WordInfo(word, embed_text(word, model), normalize_word(word), match.start(), match.end())
-            words.append(word_info)
+            words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
     return words
 
 def words_match(guess, target) -> bool:
+    """Check if two words match"""
     guess_norm, target_norm = normalize_word(guess), normalize_word(target)
     if guess_norm == target_norm:
         return True
@@ -46,8 +49,9 @@ def words_match(guess, target) -> bool:
             return True
     return False
 
-def embed_text(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
-    words = text.split()  # simple tokenization; you can use more sophisticated tokenizer
+def embed_word(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
+    """Transform a word into an embedding"""
+    words = text.split()
     vectors = []
     for word in words:
         vectors.append(model.get_word_vector(word))
@@ -69,7 +73,7 @@ def compute_similarity(guess_vec: np.ndarray, words: List['WordInfo']) -> List[S
         word_vec = word_info.embedding
         similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
 
-        similarities.append(SimilarityResult(word=word_info.text, similarity=float(similarity), index=idx))
+        similarities.append(SimilarityResult(word=word_info.word, similarity=float(similarity), index=idx))
 
     similarities.sort(key=lambda x: x.similarity, reverse=True)
 

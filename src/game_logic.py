@@ -15,17 +15,22 @@ if TYPE_CHECKING:
 
 
 def fetch_candidate(language):
+    """Fetch one wikipedia article and the views"""
     try:
         title = fetch_random_title(language)
         views = fetch_page_views(language, title)
         return title, views
+    
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()
         return False
 
 def load_game(language):
+    """Choose the wikipedia article for the game"""
     try:
+
+        # We fetch NB_ARTICLES articles and keep the one with most view
         candidates = []
         with ThreadPoolExecutor(max_workers=NB_ARTICLES) as executor:
             futures = [executor.submit(fetch_candidate, language) for _ in range(NB_ARTICLES)]
@@ -36,15 +41,20 @@ def load_game(language):
         if not candidates:
             return False
         best_title = max(candidates, key=lambda x: x[1])[0]
+
+        # Extract the content
         article = fetch_wikipedia_content(best_title, language)
-        # TODO: make article class
-        text = extract_first_paragraphs(article['html'])
-        if not text or len(text) < 100:
+        text = extract_first_paragraphs(article['html'])  # TODO: include text in article
+        if not text:
             return False
+        
+        # Tokenize text
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
         words = tokenize_text(text, model)
         if not words:
             return False
+        
+        # Update session parameters
         session_state.article = article
         session_state.full_text = text
         session_state.words = words
@@ -53,6 +63,7 @@ def load_game(language):
         session_state.model = model
         session_state.game_won = False
         return True
+    
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()
@@ -77,7 +88,8 @@ def handle_guess(guess: str):
     # Check if the guess matches any individual words
     found = False
     for word_info in session_state.words:
-        if words_match(guess, word_info.text):
+        # TODO: make words_match between words already normalized
+        if words_match(guess, word_info.word):
             session_state.revealed.add(word_info.normalized)
             found = True
 

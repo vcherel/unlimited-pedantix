@@ -9,24 +9,23 @@ if TYPE_CHECKING:
 
 class WordInfo:
     def __init__(self, text: str, embedding: np.ndarray, normalized: str, start: int, end: int):
-        self.text: str = text
+        self.word: str = text
         self.embedding: np.ndarray = embedding
         self.normalized: str = normalized
         self.start: int = start
         self.end: int = end
 
-
 class SessionState:
     _defaults: Dict[str, Any] = {
-        'language': None,
-        'article': None,
-        'full_text': "",
-        'words': [],
-        'revealed': set(),
-        'guesses': [],
-        'model': None,
-        'game_won': False,
-        'last_similarity': 0.0
+        'language': None,       # The language we play the game with ('en' or 'fr')
+        'article': None,        # The fetched article
+        'full_text': "",        # The full text of the article ; TODO: put that in article
+        'words': [],            # The words of the article (WordInfo type)
+        'revealed': set(),      # Set of revealed words
+        'guesses': [],          # List of guesses made ; TODO: add something visually to tell the user he already tried this word
+        'model': None,          # Fasttext model
+        'game_won': False,      # State of the game
+        'last_similarity': 0.0  # Best similarity found with a word in the text ; TODO: remove
     }
 
     def __init__(self):

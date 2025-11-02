@@ -26,10 +26,10 @@ def display_text():
         
         # Add word (revealed or hidden)
         if word_info.normalized in revealed:
-            html_parts.append(f"<span style='color: #27ae60; font-weight: bold;'>{word_info.text}</span>")
+            html_parts.append(f"<span style='color: #27ae60; font-weight: bold;'>{word_info.word}</span>")
         else:
             # Black box - display as inline block with fixed character
-            word_length = len(word_info.text)
+            word_length = len(word_info.word)
             boxes = '█' * word_length  # Use block character
             html_parts.append(f"<span style='color: #34495e; background-color: #34495e; user-select: none;'>{boxes}</span>")
         
@@ -111,7 +111,7 @@ def main():
         # Feedback for last guess
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
-            found = any(words_match(last_guess, w.text) for w in session_state.words)
+            found = any(words_match(last_guess, w.word) for w in session_state.words)
             if found:
                 st.success(f"✅ Found '{last_guess}'!")
             else:
