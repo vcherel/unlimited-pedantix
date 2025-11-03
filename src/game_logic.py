@@ -82,7 +82,6 @@ def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
     """
     return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
 
-
 def handle_guess(guess: str):
     """Handle one word guess"""
     guess = guess.strip().lower()

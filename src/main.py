@@ -1,16 +1,9 @@
-from __future__ import annotations
-
-from typing import List, TYPE_CHECKING 
 import streamlit as st
 
-from config import SIMILARITY_THRESHOLD
 from game_logic import load_game, handle_guess
 from embedding_utils import words_match
 from classes import session_state
 from ui_utils import display_article
-
-if TYPE_CHECKING:
-    from classes import WordInfo
 
 
 def main():
@@ -226,18 +219,18 @@ def main():
 
             # Check if the word was already proposed (excluding the last entry itself)
             if session_state.guesses.count(last_guess) > 1:
-                st.warning(f"⚠️ {last_guess} a déjà été proposé")
+                st.warning(f"⚠️ **{last_guess}** a déjà été proposé")
 
             else:
                 found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))
                 updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
 
                 if found_count == 0 and updated_count == 0:
-                    st.error(f"{last_guess} : 🟥")
+                    st.error(f"**{last_guess}** : 🟥")
                 elif found_count == 0:
-                    st.warning(f"{last_guess} : {'🟧' * updated_count}")
+                    st.warning(f"**{last_guess}** : {'🟧' * updated_count}")
                 else:
-                    st.success(f"{last_guess} : {'🟩' * found_count}{'🟧' * updated_count}")
+                    st.success(f"**{last_guess}** : {'🟩' * found_count}{'🟧' * updated_count}")
         else:
             st.info("Tapez un mot !")
 
