@@ -188,7 +188,6 @@ def main():
                     st.rerun()
 
         st.markdown("---")
-        st.markdown("### Tente ta chance :")
         
         def on_guess_change():
             guess = st.session_state.guess_input
@@ -235,6 +234,8 @@ def main():
                     st.warning(f"{last_guess} : {'🟧' * updated_count}")
                 else:
                     st.success(f"{last_guess} : {'🟩' * found_count}{'🟧' * updated_count}")
+        else:
+            st.info("Tapez un mot !")
 
         # Article display
         display_article()
