@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 from game_logic import load_game, handle_guess
 from embedding_utils import words_match
@@ -45,7 +46,6 @@ def main():
             with col1:
                 if st.button("🇫🇷", use_container_width=True):
                     selected_language = 'fr'
-
             with col2:
                 if st.button("🇬🇧", use_container_width=True):
                     selected_language = 'en'
@@ -162,7 +162,7 @@ def main():
                 st.markdown(
                     f"""
                     <div class="winbar">
-                        <div class="big">🎉 Bravo !!! L’article était : <b>{st.session_state.article.title}</b></div>
+                        <div class="big">🎉 Bravo !!! L'article était : <b>{st.session_state.article.title}</b></div>
                         <div class="big">Essais : {len(st.session_state.guesses)}</div>
                         <a class="wiki" href="{st.session_state.article.url}" target="_blank">Voir sur Wikipédia</a>
                     </div>
@@ -179,8 +179,7 @@ def main():
             with col3:
                 if st.button("Afficher tout", use_container_width=True):
                     session_state.revealed_end.update(
-                        word_info.normalized
-                        for word_info in session_state.article_words
+                        word_info.normalized for word_info in session_state.article_words
                         if word_info.normalized not in session_state.revealed
                     )
         
@@ -232,7 +231,62 @@ def main():
             label_visibility="collapsed",
             on_change=on_guess_change
         )
-
+        
+        # JavaScript to auto-focus and capture keyboard input
+        components.html(
+            """
+            <script>
+            const setupAutoFocus = () => {
+                const parentDoc = window.parent.document;
+                const input = parentDoc.querySelector('input[aria-label="input"]');
+                
+                if (!input) {
+                    setTimeout(setupAutoFocus, 100);
+                    return;
+                }
+                
+                // Focus immediately
+                input.focus();
+                
+                // Capture keyboard events
+                parentDoc.addEventListener('keydown', (e) => {
+                    // Skip if modifier keys are pressed
+                    if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    
+                    // Skip if already in an input
+                    const active = parentDoc.activeElement;
+                    if (active && active !== input && 
+                        (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || 
+                         active.tagName === 'BUTTON' || active.isContentEditable)) {
+                        return;
+                    }
+                    
+                    // For any printable key or backspace, focus our input
+                    if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                        input.focus();
+                    }
+                }, true);
+                
+                // Keep refocusing
+                setInterval(() => {
+                    const active = parentDoc.activeElement;
+                    if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'BUTTON' && 
+                                    active.tagName !== 'TEXTAREA')) {
+                        input.focus();
+                    }
+                }, 500);
+            };
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupAutoFocus);
+            } else {
+                setupAutoFocus();
+            }
+            </script>
+            """,
+            height=0,
+        )
+        
         # Feedback for last guess
         feedback_html = """
         <style>
@@ -258,7 +312,6 @@ def main():
             {content}
         </div>
         """
-
 
         feedback_content = ""
 
