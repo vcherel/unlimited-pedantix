@@ -19,18 +19,29 @@ def normalize_word(word: str) -> str:
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
 def tokenize_text(text, model) -> List[WordInfo]:
-    """Transform words to WordInfo objects, computing embeddings"""
-    # Match sequences of letters (including accented) and/or numbers
-    # \w matches letters, numbers, and underscore; \b ensures word boundaries
+    """Transform words to WordInfo objects, computing embeddings in batch"""
     pattern = r'\b\w+\b'
+    matches = [m for m in re.finditer(pattern, text, re.UNICODE)]
+    
     words = []
-    for match in re.finditer(pattern, text, re.UNICODE):
-        word = match.group()
-        # Skip words that contain underscores
-        if "_" in word:
-            continue
-        word = word.replace("œ", "oe").replace("Œ", "Oe")
-        words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
+    filtered_words = []
+    filtered_indices = []
+    
+    # Preprocess words and filter out those with underscores
+    for m in matches:
+        word = m.group().replace("œ", "oe").replace("Œ", "Oe")
+        if "_" not in word:
+            filtered_words.append(word)
+            filtered_indices.append((m.start(), m.end()))
+    
+    # Batch compute embeddings
+    embeddings = [model[w] for w in filtered_words]
+
+    # Build WordInfo objects
+    for i, word in enumerate(filtered_words):
+        start, end = filtered_indices[i]
+        words.append(WordInfo(word, embeddings[i], normalize_word(word), start, end))
+    
     return words
 
 def words_match(guess: str, target: str) -> bool:
