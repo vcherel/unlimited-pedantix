@@ -234,25 +234,57 @@ def main():
         )
 
         # Feedback for last guess
+        feedback_html = """
+        <style>
+        .feedback-box {{
+            position: fixed;
+            bottom: 1.5rem;
+            left: 400px;
+            max-width: 1500px;
+            z-index: 999999;
+            background: rgba(255,255,255,0.95);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            font-size: 1rem;
+            font-weight: 500;
+        }}
+        .feedback-box p {{
+            margin: 0;
+        }}
+        </style>
+        <div class="feedback-box">
+            {content}
+        </div>
+        """
+
+        feedback_content = ""
+
         if session_state.guesses:
             last_guess = session_state.guesses[-1]
 
-            # Check if the word was already proposed (excluding the last entry itself)
             if session_state.guesses.count(last_guess) > 1:
-                st.warning(f"⚠️ **{last_guess}** a déjà été proposé")
-
+                feedback_content = f"⚠️ <b>{last_guess}</b> a déjà été proposé"
+                color = "orange"
             else:
                 found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))
                 updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
 
                 if found_count == 0 and updated_count == 0:
-                    st.error(f"**{last_guess}** : 🟥")
+                    feedback_content = f"❌ <b>{last_guess}</b> : 🟥"
+                    color = "red"
                 elif found_count == 0:
-                    st.warning(f"**{last_guess}** : {'🟧' * updated_count}")
+                    feedback_content = f"🟠 <b>{last_guess}</b> : {'🟧' * updated_count}"
+                    color = "orange"
                 else:
-                    st.success(f"**{last_guess}** : {'🟩' * found_count}{'🟧' * updated_count}")
+                    feedback_content = f"✅ <b>{last_guess}</b> : {'🟩' * found_count}{'🟧' * updated_count}"
+                    color = "green"
         else:
-            st.info("Tapez un mot dans la barre en bas !")
+            feedback_content = "💡 Tapez un mot dans la barre !"
+            color = "#555"
+
+        # Inject the floating feedback box
+        st.markdown(feedback_html.format(content=f"<p style='color:{color}'>{feedback_content}</p>"), unsafe_allow_html=True)
 
         # Article display
         display_article()
