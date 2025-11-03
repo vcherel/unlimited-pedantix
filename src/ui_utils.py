@@ -42,25 +42,28 @@ def display_article():
                     red = int(255 * (1 - ratio))
                     green = 255
                 color = f"rgb({red},{green},0)"
-                # Box adapts to the guess length
+                # Box adapts to the guess length plus room for the counter
                 guess_length = max(len(word_info.best_guess), len(word_info.word))
-                box_width = f"{guess_length * 0.6}em"
-                # Create a box with the guess displayed on top
+                box_width = f"{guess_length * 0.6 + 1.1}em"   # extra 1.1em for the counter
+                # Create a box with the guess displayed on top and length hint at bottom-right
                 parts.append(f"""<span style='position: relative; display: inline-block; 
                                             background-color: #2c3e50; width: {box_width}; 
                                             height: 1.2em; border-radius: 4px; vertical-align: middle; 
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
                     <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
                                  color: {color}; font-weight: bold; white-space: nowrap; font-size: 0.85em;'>{word_info.best_guess}</span>
+                    <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{len(word_info.word)}</span>
                 </span>""")
             else:
-                # Beautiful black box
+                # Beautiful black box with length hint at bottom-right
                 word_length = len(word_info.word)
-                box_width = f"{word_length * 0.6}em"
-                parts.append(f"""<span style='display: inline-block; background-color: #2c3e50; 
+                box_width = f"{word_length * 0.6 + 1.1}em"   # extra 1.1em for the counter
+                parts.append(f"""<span style='position: relative; display: inline-block; background-color: #2c3e50; 
                                             width: {box_width}; height: 1.2em; border-radius: 4px; 
                                             vertical-align: middle; 
-                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);'></span>""")
+                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
+                    <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{word_length}</span>
+                </span>""")
             current_pos = word_info.end
         
         # Add any remaining text
