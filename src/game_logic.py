@@ -30,11 +30,12 @@ def fetch_candidate(language):
         traceback.print_exc()
         return False
 
-def load_game(language, status_placeholder):
+def load_game(language, update_spinner_func):
     """Choose the wikipedia article for the game"""
     try:
-        status_placeholder.markdown("**Choix de l'article en cours...**")
+        update_spinner_func("**Choix de l'article en cours...**")
         time.sleep(0.2)
+        
         candidates = []
         with ThreadPoolExecutor(max_workers=NB_ARTICLES) as executor:
             futures = [executor.submit(fetch_candidate, language) for _ in range(NB_ARTICLES)]
@@ -42,35 +43,39 @@ def load_game(language, status_placeholder):
                 result = future.result()
                 if result:
                     candidates.append(result)
+        
         if not candidates:
             return False
         
         candidates.sort(key=lambda x: x[1], reverse=True)
-
+        
         # Print top 5 articles and their views
         print("\nTop 5 articles by views:")
         for title, views in candidates[:5]:
-            print(f"    {title}: {views} views")
-
+            print(f"  {title}: {views} views")
+        
         best_title = candidates[0][0]
         print(f"\n~~~~ {best_title} ~~~~")
-        status_placeholder.markdown(f"**Récupération de l'article...**")
+        
+        update_spinner_func(f"Récupération de l'article...")
         time.sleep(0.2)
-
+        
         article: WikipediaPage = fetch_wikipedia_content(best_title, language)
         article.text = extract_first_paragraphs(article.text)
+        
         if not article.text:
             return False
         
-        status_placeholder.markdown("**Préparation de l'IA tueuse...**")
+        update_spinner_func("Préparation de l'IA tueuse...")
         time.sleep(0.2)
+        
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
         
-        status_placeholder.markdown("**Finito !**")
+        update_spinner_func("Finito !")
         time.sleep(0.2)
-
+        
         session_state.article = article
         session_state.article_words = article_words
         session_state.title_words = title_words
@@ -79,8 +84,8 @@ def load_game(language, status_placeholder):
         session_state.guesses = []
         session_state.model = model
         session_state.game_won = False
+        
         return True
-
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()

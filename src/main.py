@@ -54,54 +54,59 @@ def main():
         if selected_language:
             session_state.language = selected_language
             st.empty()
-
             spinner_placeholder = st.empty()
-            status_placeholder = st.empty()
-
-            # Spinner HTML
-            spinner_html = """
-            <style>
-            .spinner-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 140vh;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                z-index: 9999;
-            }
-            .spinner {
-                border: 8px solid #f3f3f3;
-                border-top: 8px solid #3498db;
-                border-radius: 50%;
-                width: 80px;
-                height: 80px;
-                animation: spin 1s linear infinite;
-            }
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            </style>
-            <div class="spinner-container">
-                <div class="spinner"></div>
-            </div>
-            """
-            spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
-
-            success = load_game(selected_language, status_placeholder)
-
+            def update_spinner(status_text=""):
+                spinner_html = f"""
+                <style>
+                .spinner-container {{
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    z-index: 9999;
+                    background-color: rgba(255, 255, 255, 0.95);
+                }}
+                .spinner {{
+                    border: 8px solid #f3f3f3;
+                    border-top: 8px solid #3498db;
+                    border-radius: 50%;
+                    width: 80px;
+                    height: 80px;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 30px;
+                }}
+                .status-text {{
+                    font-size: 18px;
+                    color: #333;
+                    font-weight: 500;
+                    text-align: center;
+                }}
+                @keyframes spin {{
+                    0% {{ transform: rotate(0deg); }}
+                    100% {{ transform: rotate(360deg); }}
+                }}
+                </style>
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div class="status-text">{status_text}</div>
+                </div>
+                """
+                spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
+            
+            update_spinner()
+            success = load_game(selected_language, update_spinner)
             spinner_placeholder.empty()
-            status_placeholder.empty()
-
+            
             if success:
                 st.rerun()
             else:
                 st.error("Erreur chargement du jeu.")
                 session_state.language = None
-
             return
 
     # Game interface
