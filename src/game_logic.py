@@ -125,5 +125,6 @@ def handle_guess(guess: str):
 
     # Check victory
     title_words = [w.lower() for w in session_state.article.title.split()]
+    print(f"Title words : {title_words}, Revealed: {session_state.revealed}")
     if all(w in session_state.revealed for w in title_words):
         session_state.game_won = True

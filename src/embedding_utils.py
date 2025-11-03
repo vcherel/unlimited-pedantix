@@ -20,8 +20,8 @@ def normalize_word(word: str) -> str:
 
 def tokenize_text(text, model) -> List[WordInfo]:
     """Transform words to WordInfo objects, computing embeddings"""
-    # Match sequences of letters/numbers/apostrophes (exclude hyphen)
-    pattern = r"\b[\w']+\b"  
+    # Match sequences of letters/numbers/apostrophes
+    pattern = r"\b\w+\b"
     words = []
     for match in re.finditer(pattern, text):
         word = match.group()

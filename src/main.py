@@ -126,14 +126,99 @@ def main():
 
         # Win condition
         if session_state.game_won:
+            # ----------  CRAZY-GREEN-WIN-BAR  ----------
             st.balloons()
-            st.success(f"Bravo ! Article: **{session_state.article.title}**")
-            st.markdown(f"**Nombre total d'essais:** {len(session_state.guesses)}")
-            st.markdown(f"[Voir sur Wikipédia]({session_state.article.url})")
-            if st.button("Rejouer"):
-                session_state.language = None
-                st.rerun()
-            return
+            st.markdown(
+                """
+                <style>
+                /* ---- softer green box ---- */
+                .winbar {
+                    background: linear-gradient(135deg, #66ff99, #33cc7a); /* softer green */
+                    border-radius: 20px;
+                    padding: 1.2rem 2rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 2rem;
+                    box-shadow: 0 8px 24px rgba(102,255,153,0.4); /* softer shadow */
+                    margin-bottom: 2rem;
+                }
+                /* ---- big text ---- */
+                .winbar .big {
+                    font-size: 2.2rem;
+                    font-weight: 800;
+                    color: #fff;
+                    text-shadow: 0 2px 4px rgba(0,0,0,.25);
+                }
+                /* ---- wiki link ---- */
+                .winbar a.wiki {
+                    font-size: 1.6rem;
+                    color: #fff;
+                    text-decoration: none;
+                    border: 2px solid #fff;
+                    border-radius: 12px;
+                    padding: .4rem 1rem;
+                    transition: .25s;
+                }
+                .winbar a.wiki:hover {
+                    background: #fff;
+                    color: #33cc7a;
+                }
+
+                /* ---- floating balloons ---- */
+                @keyframes float {
+                    0%   { transform: translateY(100vh) scale(1); opacity: .9; }
+                    100% { transform: translateY(-120vh) scale(1.15); opacity: 0; }
+                }
+                .balloon {
+                    position: fixed;
+                    bottom: -120px;
+                    width: 70px;
+                    height: 90px;
+                    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+                    box-shadow: inset -6px -10px 12px rgba(0,0,0,.2);
+                    animation: float 12s linear infinite;
+                    z-index: 9999;
+                    opacity: 0.95;
+                }
+                .balloon:nth-child(odd)  { background: #fffa65; }
+                .balloon:nth-child(even) { background: #ff6b6b; }
+                </style>
+
+                <!-- more balloons -->
+                <div class="balloon" style="left: 2%;  animation-duration: 11s;"></div>
+                <div class="balloon" style="left: 10%; animation-duration: 14s; animation-delay: 2s;"></div>
+                <div class="balloon" style="left: 18%; animation-duration: 13s; animation-delay: 1s;"></div>
+                <div class="balloon" style="left: 25%; animation-duration: 12s; animation-delay: 0.5s;"></div>
+                <div class="balloon" style="left: 35%; animation-duration: 15s; animation-delay: 3s;"></div>
+                <div class="balloon" style="left: 45%; animation-duration: 12s; animation-delay: 2s;"></div>
+                <div class="balloon" style="left: 55%; animation-duration: 13s; animation-delay: 1s;"></div>
+                <div class="balloon" style="left: 65%; animation-duration: 14s; animation-delay: 2s;"></div>
+                <div class="balloon" style="left: 75%; animation-duration: 15s; animation-delay: 4s;"></div>
+                <div class="balloon" style="left: 85%; animation-duration: 10s; animation-delay: 5s;"></div>
+                <div class="balloon" style="left: 92%; animation-duration: 11s; animation-delay: 3s;"></div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            bar = st.container()
+            with bar:
+                st.markdown(
+                    f"""
+                    <div class="winbar">
+                        <div class="big">🎉 Bravo !!! L’article était : <b>{st.session_state.article.title}</b></div>
+                        <div class="big">Essais : {len(st.session_state.guesses)}</div>
+                        <a class="wiki" href="{st.session_state.article.url}" target="_blank">Voir sur Wikipédia</a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("Rejouer", type="primary", use_container_width=True):
+                    session_state.language = None
+                    st.rerun()
 
         st.markdown("---")
         st.markdown("### Tente ta chance :")
@@ -172,9 +257,6 @@ def main():
             # Check if the word was already proposed (excluding the last entry itself)
             if session_state.guesses.count(last_guess) > 1:
                 st.warning(f"⚠️ {last_guess} a déjà été proposé")
-                            
-            elif " " in last_guess:
-                st.warning("⚠️ Les espaces ne sont pas autorisés")
 
             else:
                 found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))

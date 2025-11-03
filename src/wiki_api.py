@@ -50,9 +50,11 @@ def fetch_wikipedia_content(title, language):
     if 'error' in data:
         raise Exception(f"Page not found: {data['error']['info']}")
     parse_obj = data['parse']
+    title = parse_obj['title']
+    clean_title = re.sub(r'\s*\(.*?\)', '', title)
 
     return WikipediaPage(
-        title=parse_obj['title'],
+        title=clean_title,
         text=parse_obj['text']['*'],
         url=f"https://{language}.wikipedia.org/wiki/{quote(parse_obj['title'])}"
         )
