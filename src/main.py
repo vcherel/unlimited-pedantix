@@ -229,6 +229,10 @@ def main():
             .appview-container, .block-container, .main {
                 padding-bottom: 120px !important;
             }
+            /* Hide "Press Enter to Apply" */
+            div[data-testid="InputInstructions"] > span:nth-child(1) {
+                visibility: hidden !important;
+            }
             </style>
             """,
             unsafe_allow_html=True,
