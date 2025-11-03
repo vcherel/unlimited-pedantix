@@ -20,11 +20,15 @@ def normalize_word(word: str) -> str:
 
 def tokenize_text(text, model) -> List[WordInfo]:
     """Transform words to WordInfo objects, computing embeddings"""
-    # Match sequences of letters/numbers/apostrophes
-    pattern = r"\b\w+\b"
+    # Match sequences of letters (including accented) and/or numbers
+    # \w matches letters, numbers, and underscore; \b ensures word boundaries
+    pattern = r'\b\w+\b'
     words = []
-    for match in re.finditer(pattern, text):
+    for match in re.finditer(pattern, text, re.UNICODE):
         word = match.group()
+        # Skip words that contain underscores
+        if "_" in word:
+            continue
         words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
     return words
 
