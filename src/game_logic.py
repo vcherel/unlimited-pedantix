@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import math
 from typing import List, TYPE_CHECKING
 import traceback
 import fasttext
@@ -73,6 +74,13 @@ def load_game(language):
         print(f"Error in load_game: {e}")
         traceback.print_exc()
         return False
+    
+def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
+    """
+    Compute a smooth similarity between two numbers.
+    """
+    return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
+
 
 def handle_guess(guess: str):
     """Handle one word guess"""
@@ -87,27 +95,35 @@ def handle_guess(guess: str):
         if words_match(guess, word_info.word):
             session_state.revealed.add(word_info.normalized)
 
-    # Check similarities
-    guess_vec = embed_word(normalize_word(guess), session_state.model)
-    if np.all(guess_vec == 0):
-        print(f"Warining: Zero word vector for guess: {guess}")
+    if guess.isdigit():
+        guess_num = float(guess)
+        max_similarity = 0.0
+        for word_info in session_state.article_words:
+            if word_info.word.isdigit():
+                word_num = float(word_info.word)
+                similarity = numeric_similarity(guess_num, word_num, sigma=5.0)
+                if similarity > word_info.best_similarity:
+                    word_info.best_guess = guess
+                    word_info.best_similarity = similarity
+                max_similarity = max(max_similarity, similarity)
+        session_state.last_similarity = max_similarity
+    else:
+        # Existing embedding-based logic
+        guess_vec = embed_word(normalize_word(guess), session_state.model)
+        if np.all(guess_vec == 0):
+            print(f"Warning: Zero word vector for guess: {guess}")
 
-    similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
+        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
 
-    # Store the highest similarity for feedback
-    session_state.last_similarity = similar_results[0].similarity if similar_results else 0
-    
-    # Update best guesses for similar words
-    for result in similar_results:
-        word_info = session_state.article_words[result.index]
-        
-        # If this guess is better than the current best, update it
-        if result.similarity > word_info.best_similarity:
-            word_info.best_guess = guess
-            word_info.best_similarity = result.similarity
-    
+        session_state.last_similarity = similar_results[0].similarity if similar_results else 0
+
+        for result in similar_results:
+            word_info = session_state.article_words[result.index]
+            if result.similarity > word_info.best_similarity:
+                word_info.best_guess = guess
+                word_info.best_similarity = result.similarity
+
     # Check victory
     title_words = [w.lower() for w in session_state.article.title.split()]
     if all(w in session_state.revealed for w in title_words):
         session_state.game_won = True
-        return
