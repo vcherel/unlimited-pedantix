@@ -117,7 +117,7 @@ def main():
             total_unique = len(set(w.normalized for w in session_state.article_words))
             st.metric("Progression", f"{revealed_count}/{total_unique} ({round(revealed_count / total_unique * 100, 1)}%)")
 
-        # Win condition
+        # Winner interface
         if session_state.game_won:
             st.balloons()
             st.markdown(
@@ -183,8 +183,6 @@ def main():
                         for word_info in session_state.article_words
                         if word_info.normalized not in session_state.revealed
                     )
-                    
-        st.markdown("---")
         
         def on_guess_change():
             guess = st.session_state.guess_input
@@ -197,7 +195,7 @@ def main():
         st.markdown(
             """
             <style>
-            /* Text input at the bottom */
+            /* Fix text input at bottom */
             div[data-testid="stTextInput"] {
                 position: fixed !important;
                 bottom: 1.5rem !important;
@@ -206,26 +204,28 @@ def main():
                 z-index: 999999 !important;
                 padding: 8px 12px !important;
                 border-radius: 12px !important;
+                background: white !important;
                 box-shadow: 0 6px 18px rgba(0,0,0,0.15) !important;
-                width: 350px !important; /* responsive */
+                width: 350px !important;
             }
 
-            /* Modify size of the text input */
+            /* Input field styling */
             div[data-testid="stTextInput"] input {
                 font-size: 18px !important;
                 padding: 10px 14px !important;
+                background: white !important;
+                border-radius: 10px !important;
             }
 
-            /* Leave space at bottom to avoid hiding words */
+            /* Leave space at bottom so content isn't hidden */
             .appview-container, .block-container, .main {
-                padding-bottom: 100px !important;
+                padding-bottom: 120px !important;
             }
             </style>
             """,
             unsafe_allow_html=True,
         )
 
-        # Your existing on_change handler and text_input (unchanged)
         st.text_input(
             "input",
             key="guess_input",
@@ -243,11 +243,12 @@ def main():
             max-width: 1500px;
             z-index: 999999;
             background: rgba(255,255,255,0.95);
-            padding: 0.8rem 1.2rem;
+            padding: 0.95rem 1.2rem;
             border-radius: 12px;
             box-shadow: 0 6px 18px rgba(0,0,0,0.15);
             font-size: 1rem;
             font-weight: 500;
+            min-height: 50px;
         }}
         .feedback-box p {{
             margin: 0;
@@ -257,6 +258,7 @@ def main():
             {content}
         </div>
         """
+
 
         feedback_content = ""
 
