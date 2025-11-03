@@ -35,7 +35,7 @@ def tokenize_text(text, model) -> List[WordInfo]:
             filtered_indices.append((m.start(), m.end()))
     
     # Batch compute embeddings
-    embeddings = [model[w] for w in filtered_words]
+    embeddings = np.array([model[w] for w in filtered_words])
 
     # Build WordInfo objects
     for i, word in enumerate(filtered_words):
