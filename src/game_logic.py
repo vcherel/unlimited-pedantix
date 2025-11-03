@@ -65,6 +65,7 @@ def load_game(language):
         session_state.article_words = article_words
         session_state.title_words = title_words
         session_state.revealed = set()
+        session_state.revealed_end = set()
         session_state.guesses = []
         session_state.model = model
         session_state.game_won = False
@@ -92,6 +93,10 @@ def handle_guess(guess: str):
 
     # Check if the guess matches any individual words
     for word_info in session_state.article_words:
+        if words_match(guess, word_info.word):
+            session_state.revealed.add(word_info.normalized)
+
+    for word_info in session_state.title_words:
         if words_match(guess, word_info.word):
             session_state.revealed.add(word_info.normalized)
 
@@ -124,6 +129,5 @@ def handle_guess(guess: str):
                 word_info.best_similarity = result.similarity
 
     # Check victory
-    title_words = [w.lower() for w in session_state.article.title.split()]
-    if all(normalize_word(w) in session_state.revealed for w in title_words):
+    if all(w in session_state.revealed for w in [w.normalized for w in session_state.title_words]):
         session_state.game_won = True

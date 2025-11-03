@@ -37,6 +37,7 @@ class SessionState:
         'article_words': [],    # The words of the article (WordInfo type)
         'title_words': [],      # The words of the title
         'revealed': set(),      # Set of revealed words
+        'revealed_end': set(),  # Set of revealed words at the end
         'guesses': [],          # List of guesses made
         'model': None,          # Fasttext model
         'game_won': False,      # State of the game
@@ -55,9 +56,10 @@ class SessionState:
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
-    article_words: List['WordInfo'] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
-    title_words: List['WordInfo'] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
+    article_words: List[WordInfo] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
+    title_words: List[WordInfo] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
     revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
+    revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
     game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))

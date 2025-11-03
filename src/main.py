@@ -183,6 +183,14 @@ def main():
                     session_state.language = None
                     st.rerun()
 
+            with col3:
+                if st.button("Afficher tout", use_container_width=True):
+                    session_state.revealed_end.update(
+                        word_info.normalized
+                        for word_info in session_state.article_words
+                        if word_info.normalized not in session_state.revealed
+                    )
+                    
         st.markdown("---")
         
         def on_guess_change():

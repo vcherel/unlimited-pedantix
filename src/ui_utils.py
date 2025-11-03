@@ -29,7 +29,7 @@ def display_article():
             if just_revealed:
                 # Strong green box + white text for newly revealed words
                 word_length = len(word_info.word)
-                box_width = f"{word_length * 0.6 + 1.1}em"
+                box_width = f"{word_length * 0.6 + 1.6}em"
                 parts.append(f"""<span style='position: relative; display: inline-block; 
                                             background-color: #27AE60; width: {box_width}; height: 1.2em; 
                                             border-radius: 4px; vertical-align: middle; 
@@ -49,7 +49,7 @@ def display_article():
                 norm_similarity = max(0, min(norm_similarity, 1))
                 
                 guess_length = max(len(word_info.best_guess), len(word_info.word))
-                box_width = f"{guess_length * 0.6 + 1.1}em"
+                box_width = f"{guess_length * 0.6 + 1.6}em"
                 
                 if is_last_guess:
                     # Most recent guess: gradient for similar, green for exact
@@ -77,6 +77,19 @@ def display_article():
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
                     <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
                                 color: {color}; font-weight: bold; white-space: nowrap;'>{word_info.best_guess}</span>
+                    <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{len(word_info.word)}</span>
+                </span>""")
+
+            elif word_info.normalized in session_state.revealed_end:
+                word_length = len(word_info.word)
+                box_width = f"{word_length * 0.6 + 1.6}em"
+                color = "#D67DDF"
+                parts.append(f"""<span style='position: relative; display: inline-block; 
+                                            background-color: #2c3e50; width: {box_width}; height: 1.2em; 
+                                            border-radius: 4px; vertical-align: middle; 
+                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
+                    <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                                color: {color}; font-weight: bold; white-space: nowrap;'>{word_info.word}</span>
                     <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{len(word_info.word)}</span>
                 </span>""")
             
