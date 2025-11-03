@@ -33,7 +33,7 @@ def fetch_candidate(language):
 def load_game(language, update_spinner_func):
     """Choose the wikipedia article for the game"""
     try:
-        update_spinner_func("**Choix de l'article en cours...**")
+        update_spinner_func("Choix de l'article en cours...")
         time.sleep(0.2)
         
         candidates = []
