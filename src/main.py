@@ -234,8 +234,7 @@ def main():
         
         # JavaScript to auto-focus and capture keyboard input
         components.html(
-            """
-            <script>
+            """<script>
             const setupAutoFocus = () => {
                 const parentDoc = window.parent.document;
                 const input = parentDoc.querySelector('input[aria-label="input"]');
@@ -253,16 +252,21 @@ def main():
                     // Skip if modifier keys are pressed
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
                     
-                    // Skip if already in an input
                     const active = parentDoc.activeElement;
                     if (active && active !== input && 
                         (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || 
-                         active.tagName === 'BUTTON' || active.isContentEditable)) {
+                        active.tagName === 'BUTTON' || active.isContentEditable)) {
                         return;
                     }
                     
-                    // For any printable key or backspace, focus our input
-                    if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                    // Allow only letters and numbers
+                    const allowed = /^[a-zA-Z0-9]$/;
+                    if (e.key.length === 1 && !allowed.test(e.key)) {
+                        e.preventDefault(); // Block the key
+                    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                        // Allow deletion
+                        input.focus();
+                    } else if (e.key.length === 1) {
                         input.focus();
                     }
                 }, true);
@@ -276,7 +280,7 @@ def main():
                     }
                 }, 500);
             };
-            
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', setupAutoFocus);
             } else {
