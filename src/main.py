@@ -53,10 +53,12 @@ def main():
         # Spinner
         if selected_language:
             session_state.language = selected_language
-            
-            # Clear the entire page first
             st.empty()
-            
+
+            spinner_placeholder = st.empty()
+            status_placeholder = st.empty()
+
+            # Spinner HTML
             spinner_html = """
             <style>
             .spinner-container {
@@ -87,18 +89,20 @@ def main():
                 <div class="spinner"></div>
             </div>
             """
-            
-            st.markdown(spinner_html, unsafe_allow_html=True)
-            
-            success = load_game(selected_language)
-            
+            spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
+
+            success = load_game(selected_language, status_placeholder)
+
+            spinner_placeholder.empty()
+            status_placeholder.empty()
+
             if success:
                 st.rerun()
             else:
                 st.error("Erreur chargement du jeu.")
                 session_state.language = None
-        
-        return
+
+            return
 
     # Game interface
     if session_state.article and session_state.article_words:

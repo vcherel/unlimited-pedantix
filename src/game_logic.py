@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import math
 from typing import List, TYPE_CHECKING
+import numpy as np
 import traceback
 import fasttext
-import numpy as np
+import math
+import time
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
@@ -22,7 +23,6 @@ def fetch_candidate(language):
     try:
         title = fetch_random_title(language)
         views = fetch_page_views(language, title)
-        print(f"{title} -> {views}")
         return title, views
     
     except Exception as e:
@@ -30,10 +30,11 @@ def fetch_candidate(language):
         traceback.print_exc()
         return False
 
-def load_game(language):
+def load_game(language, status_placeholder):
     """Choose the wikipedia article for the game"""
     try:
-        # We fetch NB_ARTICLES articles and keep the one with most view
+        status_placeholder.markdown("**Choix de l'article en cours...**")
+        time.sleep(0.2)
         candidates = []
         with ThreadPoolExecutor(max_workers=NB_ARTICLES) as executor:
             futures = [executor.submit(fetch_candidate, language) for _ in range(NB_ARTICLES)]
@@ -44,23 +45,32 @@ def load_game(language):
         if not candidates:
             return False
         
-        best_title = max(candidates, key=lambda x: x[1])[0]
-        print(f"\n### {best_title} ###")
+        candidates.sort(key=lambda x: x[1], reverse=True)
 
-        # Extract the content
+        # Print top 5 articles and their views
+        print("\nTop 5 articles by views:")
+        for title, views in candidates[:5]:
+            print(f"    {title}: {views} views")
+
+        best_title = candidates[0][0]
+        print(f"\n~~~~ {best_title} ~~~~")
+        status_placeholder.markdown(f"**Récupération de l'article...**")
+        time.sleep(0.2)
+
         article: WikipediaPage = fetch_wikipedia_content(best_title, language)
         article.text = extract_first_paragraphs(article.text)
         if not article.text:
             return False
         
-        # Tokenize text
-        print("Tokenizing text...")
+        status_placeholder.markdown("**Préparation de l'IA tueuse...**")
+        time.sleep(0.2)
         model = fasttext.load_model(f'models/cc.{language}.300.bin')
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
-        print("Done.")
         
-        # Update session parameters
+        status_placeholder.markdown("**Finito !**")
+        time.sleep(0.2)
+
         session_state.article = article
         session_state.article_words = article_words
         session_state.title_words = title_words
@@ -70,7 +80,7 @@ def load_game(language):
         session_state.model = model
         session_state.game_won = False
         return True
-    
+
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()
