@@ -194,20 +194,40 @@ def main():
                 st.session_state.guess_input = ""
 
         # Text input with on_change callback (triggers on Enter key)
-        st.markdown("""
+        st.markdown(
+            """
             <style>
-            .stTextInput > div > div > input {
-                font-size: 18px;
-                padding: 12px;
+            /* Text input at the bottom */
+            div[data-testid="stTextInput"] {
+                position: fixed !important;
+                bottom: 1.5rem !important;
+                left: 12% !important;
+                transform: translateX(-50%) !important;
+                z-index: 999999 !important;
+                padding: 8px 12px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.15) !important;
+                width: 350px !important; /* responsive */
             }
-            .stTextInput {
-                max-width: 300px;
-                margin-top: -20px;
+
+            /* Modify size of the text input */
+            div[data-testid="stTextInput"] input {
+                font-size: 18px !important;
+                padding: 10px 14px !important;
+            }
+
+            /* Leave space at bottom to avoid hiding words */
+            .appview-container, .block-container, .main {
+                padding-bottom: 100px !important;
             }
             </style>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Your existing on_change handler and text_input (unchanged)
         st.text_input(
-            "input", 
+            "input",
             key="guess_input",
             label_visibility="collapsed",
             on_change=on_guess_change
@@ -232,7 +252,7 @@ def main():
                 else:
                     st.success(f"**{last_guess}** : {'🟩' * found_count}{'🟧' * updated_count}")
         else:
-            st.info("Tapez un mot !")
+            st.info("Tapez un mot dans la barre en bas !")
 
         # Article display
         display_article()
