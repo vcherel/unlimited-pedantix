@@ -29,6 +29,7 @@ def tokenize_text(text, model) -> List[WordInfo]:
         # Skip words that contain underscores
         if "_" in word:
             continue
+        word = word.replace("œ", "oe").replace("Œ", "Oe")
         words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
     return words
 
