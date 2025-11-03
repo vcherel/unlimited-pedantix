@@ -122,7 +122,7 @@ def main():
         with col3:
             revealed_count = len(session_state.revealed)
             total_unique = len(set(w.normalized for w in session_state.article_words))
-            st.metric("Progression", f"{revealed_count}/{total_unique}")
+            st.metric("Progression", f"{revealed_count}/{total_unique} ({round(revealed_count / total_unique * 100, 1)}%)")
 
         # Win condition
         if session_state.game_won:
