@@ -27,7 +27,7 @@ def tokenize_text(text, model) -> List[WordInfo]:
         words.append(WordInfo(word, embed_word(word, model), normalize_word(word), match.start(), match.end()))
     return words
 
-def words_match(guess, target) -> bool:
+def words_match(guess: str, target: str) -> bool:
     """Check if two words match"""
     guess_norm, target_norm = normalize_word(guess), normalize_word(target)
     if guess_norm == target_norm:

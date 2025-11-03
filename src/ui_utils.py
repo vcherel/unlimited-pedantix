@@ -5,6 +5,7 @@ import streamlit as st
 
 from config import SIMILARITY_THRESHOLD
 from classes import session_state
+from embedding_utils import words_match
 
 if TYPE_CHECKING:
     from classes import WordInfo
@@ -13,66 +14,92 @@ if TYPE_CHECKING:
 def display_article():
     """Display the article text with revealed/similar words shown"""
     
-    def build_display_parts(word_list: List[WordInfo], source_text):
+    def build_display_parts(word_list: List[WordInfo], source_text, last_guess: str = None):
         """Build HTML parts for displaying text with revealed/similar words"""
         parts = []
         current_pos = 0
         
         for word_info in word_list:
-            # Add any text before this word
             parts.append(source_text[current_pos:word_info.start])
             
-            # Determine what to show for this word
-            if word_info.normalized in session_state.revealed:
-                # Word is revealed - show the actual word (no box)
-                parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
-            elif word_info.best_guess:
-                # Word has a similar guess - show the guess on top of the box
-                norm_similarity = (word_info.best_similarity - SIMILARITY_THRESHOLD) / (1 - SIMILARITY_THRESHOLD)
-                norm_similarity = max(0, min(norm_similarity, 1))  # clamp to [0,1]
-                if norm_similarity < 0.5:
-                    # Dark Red -> Yellow
-                    ratio = norm_similarity / 0.5
-                    red_tone = 210
-                    red = int(red_tone + (254 - red_tone) * ratio)
-                    green = int(255 * ratio)
-                else:
-                    # Yellow -> Green
-                    ratio = (norm_similarity - 0.5) / 0.5
-                    red = int(255 * (1 - ratio))
-                    green = 255
-                color = f"rgb({red},{green},0)"
-                # Box adapts to the guess length plus room for the counter
-                guess_length = max(len(word_info.best_guess), len(word_info.word))
-                box_width = f"{guess_length * 0.6 + 1.1}em"   # extra 1.1em for the counter
-                # Create a box with the guess displayed on top and length hint at bottom-right
+            # Determine if this word is affected by the last guess
+            is_last_guess = (word_info.best_guess == last_guess)
+            just_revealed = (word_info.normalized in session_state.revealed and words_match(last_guess, word_info.word))
+            
+            if just_revealed:
+                # Strong green box + white text for newly revealed words
+                word_length = len(word_info.word)
+                box_width = f"{word_length * 0.6 + 1.1}em"
                 parts.append(f"""<span style='position: relative; display: inline-block; 
-                                            background-color: #2c3e50; width: {box_width}; 
-                                            height: 1.2em; border-radius: 4px; vertical-align: middle; 
+                                            background-color: #27AE60; width: {box_width}; height: 1.2em; 
+                                            border-radius: 4px; vertical-align: middle; 
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
-                    <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
-                                 color: {color}; font-weight: bold; white-space: nowrap; font-size: 0.85em;'>{word_info.best_guess}</span>
+                    <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                                color: #fff; font-weight: bold; white-space: nowrap;'>{word_info.word}</span>
+                    <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{word_length}</span>
+                </span>""")
+            
+            elif word_info.normalized in session_state.revealed:
+                # Previously revealed words: normal green bold text
+                parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
+            
+            elif word_info.best_guess:
+                # Word has a guess
+                norm_similarity = (word_info.best_similarity - SIMILARITY_THRESHOLD) / (1 - SIMILARITY_THRESHOLD)
+                norm_similarity = max(0, min(norm_similarity, 1))
+                
+                guess_length = max(len(word_info.best_guess), len(word_info.word))
+                box_width = f"{guess_length * 0.6 + 1.1}em"
+                
+                if is_last_guess:
+                    # Most recent guess: gradient for similar, green for exact
+                    if norm_similarity >= 1:  # exact match
+                        color = "#27AE60"
+                    else:  # similar guess
+                        if norm_similarity < 0.5:
+                            ratio = norm_similarity / 0.5
+                            red_tone = 210
+                            red = int(red_tone + (254 - red_tone) * ratio)
+                            green = int(255 * ratio)
+                        else:
+                            ratio = (norm_similarity - 0.5) / 0.5
+                            red = int(255 * (1 - ratio))
+                            green = 255
+                        color = f"rgb({red},{green},0)"
+                else:
+                    # Previous guesses: grayscale
+                    gray = int(80 + 200 * norm_similarity)
+                    color = f"rgb({gray},{gray},{gray})"
+                
+                parts.append(f"""<span style='position: relative; display: inline-block; 
+                                            background-color: #2c3e50; width: {box_width}; height: 1.2em; 
+                                            border-radius: 4px; vertical-align: middle; 
+                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
+                    <span style='position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                                color: {color}; font-weight: bold; white-space: nowrap;'>{word_info.best_guess}</span>
                     <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{len(word_info.word)}</span>
                 </span>""")
+            
             else:
-                # Beautiful black box with length hint at bottom-right
+                # Not guessed yet
                 word_length = len(word_info.word)
-                box_width = f"{word_length * 0.6 + 1.1}em"   # extra 1.1em for the counter
+                box_width = f"{word_length * 0.6 + 1.1}em"
                 parts.append(f"""<span style='position: relative; display: inline-block; background-color: #2c3e50; 
                                             width: {box_width}; height: 1.2em; border-radius: 4px; 
                                             vertical-align: middle; 
                                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
                     <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{word_length}</span>
                 </span>""")
+            
             current_pos = word_info.end
-        
-        # Add any remaining text
+
         parts.append(source_text[current_pos:])
         return ''.join(parts)
-    
+
     # Build title and text displays
-    title_html = build_display_parts(session_state.title_words, session_state.article.title)
-    text_html = build_display_parts(session_state.article_words, session_state.article.text)
+    last_guess = session_state.guesses[-1] if session_state.guesses else None
+    title_html = build_display_parts(session_state.title_words, session_state.article.title, last_guess)
+    text_html = build_display_parts(session_state.article_words, session_state.article.text, last_guess)
     
     # Display with better styling - title and text in same box
     st.markdown(f"""
