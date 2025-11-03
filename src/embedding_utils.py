@@ -62,6 +62,8 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[Sim
 
         # Compute cosine similarity
         word_vec = word_info.embedding
+        if np.all(word_vec == 0):
+            print(f"Warning: Zero word vector for: {word_info.word}")
         similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
 
         similarities.append(SimilarityResult(word=word_info.word, similarity=float(similarity), index=idx))

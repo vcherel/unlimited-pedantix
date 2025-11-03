@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, TYPE_CHECKING
 import traceback
 import fasttext
+import numpy as np
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
@@ -88,6 +89,9 @@ def handle_guess(guess: str):
 
     # Check similarities
     guess_vec = embed_word(normalize_word(guess), session_state.model)
+    if np.all(guess_vec == 0):
+        print(f"Warining: Zero word vector for guess: {guess}")
+
     similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
 
     # Store the highest similarity for feedback
