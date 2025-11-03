@@ -164,39 +164,6 @@ def main():
                     background: #fff;
                     color: #33cc7a;
                 }
-
-                /* ---- floating balloons ---- */
-                @keyframes float {
-                    0%   { transform: translateY(100vh) scale(1); opacity: .9; }
-                    100% { transform: translateY(-120vh) scale(1.15); opacity: 0; }
-                }
-                .balloon {
-                    position: fixed;
-                    bottom: -120px;
-                    width: 70px;
-                    height: 90px;
-                    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-                    box-shadow: inset -6px -10px 12px rgba(0,0,0,.2);
-                    animation: float 12s linear infinite;
-                    z-index: 9999;
-                    opacity: 0.95;
-                }
-                .balloon:nth-child(odd)  { background: #fffa65; }
-                .balloon:nth-child(even) { background: #ff6b6b; }
-                </style>
-
-                <!-- more balloons -->
-                <div class="balloon" style="left: 2%;  animation-duration: 11s;"></div>
-                <div class="balloon" style="left: 10%; animation-duration: 14s; animation-delay: 2s;"></div>
-                <div class="balloon" style="left: 18%; animation-duration: 13s; animation-delay: 1s;"></div>
-                <div class="balloon" style="left: 25%; animation-duration: 12s; animation-delay: 0.5s;"></div>
-                <div class="balloon" style="left: 35%; animation-duration: 15s; animation-delay: 3s;"></div>
-                <div class="balloon" style="left: 45%; animation-duration: 12s; animation-delay: 2s;"></div>
-                <div class="balloon" style="left: 55%; animation-duration: 13s; animation-delay: 1s;"></div>
-                <div class="balloon" style="left: 65%; animation-duration: 14s; animation-delay: 2s;"></div>
-                <div class="balloon" style="left: 75%; animation-duration: 15s; animation-delay: 4s;"></div>
-                <div class="balloon" style="left: 85%; animation-duration: 10s; animation-delay: 5s;"></div>
-                <div class="balloon" style="left: 92%; animation-duration: 11s; animation-delay: 3s;"></div>
                 """,
                 unsafe_allow_html=True,
             )
