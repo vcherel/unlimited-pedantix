@@ -275,7 +275,7 @@ def main():
                     }
                     
                     // Allow only letters and numbers
-                    const allowed = /^\p{L}$/u;
+                    const allowed = /^\p{L}|\p{N}$/u;
                     if (e.key.length === 1 && !allowed.test(e.key)) {
                         e.preventDefault(); // Block the key
                     } else if (e.key === 'Backspace' || e.key === 'Delete') {
