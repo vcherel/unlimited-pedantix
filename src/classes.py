@@ -32,17 +32,19 @@ class WordInfo:
 
 class SessionState:
     _defaults: Dict[str, Any] = {
-        'language': None,       # The language we play the game with ('en' or 'fr')
-        'article': None,        # The fetched article (WikipediaPage type)
-        'article_words': [],    # The words of the article (WordInfo type)
-        'title_words': [],      # The words of the title
-        'revealed': set(),      # Set of revealed words
-        'revealed_end': set(),  # Set of revealed words at the end
-        'guess_input': "",      # The user's input
-        'guesses': [],          # List of guesses made
-        'model': None,          # Fasttext model
-        'game_won': False,      # State of the game
-        'last_similarity': 0.0  # Best similarity found with a word in the text
+        'language': None,           # The language we play the game with ('en' or 'fr')
+        'all_words': list[str],     # List of all words in the language
+        'article': None,            # The fetched article (WikipediaPage type)
+        'article_words': [],        # The words of the article (WordInfo type)
+        'title_words': [],          # The words of the title
+        'revealed': set(),          # Set of revealed words
+        'revealed_end': set(),      # Set of revealed words at the end
+        'guess_input': "",          # The user's input
+        'guesses': [],              # List of guesses made
+        'feedback_content': str,    # Feedback for the last guess
+        'feedback_color': str,       # Color of the feedback
+        'model': None,              # Fasttext model
+        'game_won': False          # State of the game
     }
 
     def __init__(self):
@@ -56,6 +58,7 @@ class SessionState:
         st.session_state[key] = value
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
+    all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
     article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
     article_words: List[WordInfo] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
     title_words: List[WordInfo] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
@@ -63,9 +66,10 @@ class SessionState:
     revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
     guess_input: str = property(lambda self: cast(str, self._get('guess_input')), lambda self, v: self._set('guess_input', v))
+    feedback_content: str = property(lambda self: cast(str, self._get('feedback_content')), lambda self, v: self._set('feedback_content', v))
+    feedback_color: str = property(lambda self: cast(str, self._get('feedback_color')), lambda self, v: self._set('feedback_color', v))
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
     game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))
-    last_similarity: float = property(lambda self: self._get('last_similarity'), lambda self, v: self._set('last_similarity', v))
 
 
 # Global instance

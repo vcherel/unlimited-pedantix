@@ -5,6 +5,7 @@ from typing import List, TYPE_CHECKING
 import numpy as np
 import traceback
 import fasttext
+import difflib
 import math
 import time
 
@@ -82,8 +83,11 @@ def load_game(language, update_spinner_func):
         session_state.revealed = set()
         session_state.revealed_end = set()
         session_state.guesses = []
+        session_state.feedback_content = "💡 Tapez un mot dans la barre !"
+        session_state.feedback_color = "555"
         session_state.model = model
         session_state.game_won = False
+
         
         return True
     except Exception as e:
@@ -96,6 +100,32 @@ def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
     Compute a smooth similarity between two numbers.
     """
     return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
+
+def process_guess(guess):
+    """Logic to handle a guess including feedback and suggestions"""
+    handle_guess(guess)
+
+    found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
+    updated_count = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == guess)
+
+    # Suggest close word if not found
+    if found_count == 0 and updated_count == 0:
+        print(guess, type(session_state.all_words))
+        close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
+        close_word = close_matches[0] if close_matches else None    
+        if close_word and close_word != guess:
+            # Automatically handle the corrected guess
+            handle_guess(close_word)
+            session_state.guess_input = ""  # Clear input after correction
+            return f"❌ '{guess}' not found, did you mean '{close_word}'?", "red", close_word
+        else:
+            return f"❌ '{guess}' not found", "red", ""
+
+    # Provide normal feedback
+    if found_count > 0:
+        return f"✅ '{guess}': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
+    else:
+        return f"🟠 '{guess}': {'🟧'*updated_count}", "orange", ""
 
 def handle_guess(guess: str):
     """Handle one word guess"""
@@ -125,7 +155,6 @@ def handle_guess(guess: str):
                     word_info.best_guess = guess
                     word_info.best_similarity = similarity
                 max_similarity = max(max_similarity, similarity)
-        session_state.last_similarity = max_similarity
     else:
         # Existing embedding-based logic
         guess_vec = embed_word(normalize_word(guess), session_state.model)
@@ -133,8 +162,6 @@ def handle_guess(guess: str):
             print(f"Warning: Zero word vector for guess: {guess}")
 
         similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
-
-        session_state.last_similarity = similar_results[0].similarity if similar_results else 0
 
         for result in similar_results:
             word_info = session_state.article_words[result.index]

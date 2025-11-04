@@ -1,9 +1,7 @@
 import streamlit.components.v1 as components
 import streamlit as st
-import difflib
 
-from game_logic import load_game, handle_guess
-from embedding_utils import words_match
+from game_logic import load_game, process_guess
 from classes import session_state
 from ui_utils import display_article
 
@@ -110,6 +108,11 @@ def main():
                 st.error("Erreur chargement du jeu.")
                 session_state.language = None
             return
+        
+    else:
+        # Load words # TODO: make it once
+        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
+            session_state.all_words = [line.strip() for line in f]
 
     # Game interface
     if session_state.article and session_state.article_words:
@@ -196,10 +199,13 @@ def main():
         
         def on_guess_change():
             guess = session_state.guess_input
-            if guess:  # Only process if there's actual input
-                handle_guess(guess)
-                # Clear the input after processing
-                session_state.guess_input = ""
+            if not guess:
+                return
+            content, color, guess_input = process_guess(guess)
+            session_state.feedback_content = content
+            session_state.feedback_color = color
+            session_state.guess_input = ""
+            # session_state.guess_input = guess_input  # TODO: use that
 
         # Text input with on_change callback (triggers on Enter key)
         st.markdown(
@@ -332,43 +338,8 @@ def main():
         </div>
         """
 
-        # Load words list once
-        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
-            french_words = [line.strip() for line in f]
-
-        feedback_content = ""
-
-        if session_state.guesses:
-            last_guess = session_state.guesses[-1]
-
-            if session_state.guesses.count(last_guess) > 1:
-                feedback_content = f"⚠️ <b>{last_guess}</b> a déjà été proposé"
-                color = "orange"
-            else:
-                found_count = sum(1 for w in session_state.article_words if words_match(last_guess, w.word))
-                updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
-
-                if found_count == 0 and updated_count == 0:
-                    # Check for closest word
-                    close_matches = difflib.get_close_matches(last_guess, french_words, n=1, cutoff=0.7)
-                    close_word = close_matches[0] if close_matches else None
-                    if close_word and close_word != last_guess:
-                        feedback_content = f"❌ Le mot <b>'{last_guess}'</b> n'existe pas, tu voulais dire <b>'{close_word}'</b> ?"
-                    else:
-                        feedback_content = f"❌ <b>'{last_guess}'</b> : 🟥"
-                    color = "red"
-                elif found_count == 0:
-                    feedback_content = f"🟠 <b>'{last_guess}'</b> : {'🟧' * updated_count}"
-                    color = "orange"
-                else:
-                    feedback_content = f"✅ <b>'{last_guess}'</b> : {'🟩' * found_count}{'🟧' * updated_count}"
-                    color = "green"
-        else:
-            feedback_content = "💡 Tapez un mot dans la barre !"
-            color = "#555"
-
         # Inject the floating feedback box
-        st.markdown(feedback_html.format(content=f"<p style='color:{color}'>{feedback_content}</p>"), unsafe_allow_html=True)
+        st.markdown(feedback_html.format(content=f"<p style='color:{session_state.feedback_color}'>{session_state.feedback_content}</p>"), unsafe_allow_html=True)
 
         # Article display
         display_article()
