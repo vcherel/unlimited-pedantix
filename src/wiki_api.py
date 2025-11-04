@@ -60,20 +60,29 @@ def fetch_wikipedia_content(title, language):
         )
 
 def is_good_paragraph(p):
-    text = p.get_text().strip()
+    text: str = p.get_text().strip()
     word_count = len(text.split())
-    
+
+    # Basic checks
     if word_count < 10:
         return False
-    if p.find_parent("table", class_="infobox"):
+
+    # Exclude any paragraph inside an infobox, sidebar, navbox, or metadata table
+    if p.find_parent(["table", "div"], class_=re.compile(r"(infobox|navbox|metadata|vcard|sidebar)")):
         return False
+
+    # Exclude common unwanted starts
     if any(text.lower().startswith(start.lower()) for start in EXCLUDE_STARTS):
         return False
+
+    # Skip "redirige ici" notes
     if "redirige ici. Pour" in text:
         return False
+
+    # Skip audio/Écouter links
     if any(a.get_text().strip() == "Écouter" for a in p.find_all("a")):
         return False
-    
+
     return True
 
 
