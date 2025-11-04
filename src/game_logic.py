@@ -113,7 +113,7 @@ def process_guess(guess: str):
 
     # Check for repeated guess
     if normalize_word(guess) in session_state.guesses:
-        repeated = f"🟠 '<b>{guess}</b>' a déjà été proposé", "orange", ""
+        repeated = f"'<b>{guess}</b>' a déjà été proposé", "orange", ""
     else:
         repeated = None
 
@@ -142,29 +142,29 @@ def process_guess(guess: str):
             updated_close = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == close_word)
 
             if found_close > 0:
-                feedback = f"✅ '<b>{close_word}</b>': {'🟩'*found_close}{'🟧'*updated_close}"
+                feedback = f"{'🟩'*found_close}{'🟧'*updated_close}"
                 color = "green"
             elif updated_close > 0:
-                feedback = f"🟠 '<b>{close_word}</b>': {'🟧'*updated_close}"
+                feedback = f"{'🟧'*updated_close}"
                 color = "orange"
             else:
-                feedback = f"❌ '<b>{close_word}</b>' n'est pas présent"
+                feedback = f"❌"
                 color = "red"
 
             session_state.guess_input = ""
             return (
-                f"❌ '<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",
+                f"'<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",
                 color,
                 close_word,
             )
         else:
-            return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
+            return f"'<b>{guess}</b>' : 🟥", "red", ""
 
     # Provide normal feedback
     if found_count > 0:
-        return f"✅ '<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
+        return f"'<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
     else:
-        return f"🟠 '<b>{guess}</b>': {'🟧'*updated_count}", "orange", ""
+        return f"'<b>{guess}</b>': {'🟧'*updated_count}", "orange", ""
 
 def handle_guess(guess: str):
     """Handle one word guess"""
