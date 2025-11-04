@@ -119,9 +119,9 @@ def process_guess(guess):
             # Automatically handle the corrected guess
             handle_guess(close_word)
             session_state.guess_input = ""  # Clear input after correction
-            return f"❌ '{guess}' not found, did you mean '{close_word}'?", "red", close_word
+            return f"❌ '{guess}' n'est pas présent, tu voulais dire '{close_word}'?", "red", close_word
         else:
-            return f"❌ '{guess}' not found", "red", ""
+            return f"❌ '{guess}' n'est pas présent", "red", ""
 
     # Provide normal feedback
     if found_count > 0:
