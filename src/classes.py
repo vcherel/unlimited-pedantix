@@ -38,6 +38,7 @@ class SessionState:
         'title_words': [],      # The words of the title
         'revealed': set(),      # Set of revealed words
         'revealed_end': set(),  # Set of revealed words at the end
+        'guess_input': "",      # The user's input
         'guesses': [],          # List of guesses made
         'model': None,          # Fasttext model
         'game_won': False,      # State of the game
@@ -61,6 +62,7 @@ class SessionState:
     revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
     revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
+    guess_input: str = property(lambda self: cast(str, self._get('guess_input')), lambda self, v: self._set('guess_input', v))
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
     game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))
     last_similarity: float = property(lambda self: self._get('last_similarity'), lambda self, v: self._set('last_similarity', v))

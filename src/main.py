@@ -1,5 +1,6 @@
-import streamlit as st
 import streamlit.components.v1 as components
+import streamlit as st
+import difflib
 
 from game_logic import load_game, handle_guess
 from embedding_utils import words_match
@@ -46,6 +47,7 @@ def main():
             with col1:
                 if st.button("🇫🇷", use_container_width=True):
                     selected_language = 'fr'
+                    
             with col2:
                 if st.button("🇬🇧", use_container_width=True):
                     selected_language = 'en'
@@ -171,9 +173,9 @@ def main():
                 st.markdown(
                     f"""
                     <div class="winbar">
-                        <div class="big">🎉 Bravo !!! L'article était : <b>{st.session_state.article.title}</b></div>
-                        <div class="big">Essais : {len(st.session_state.guesses)}</div>
-                        <a class="wiki" href="{st.session_state.article.url}" target="_blank">Voir sur Wikipédia</a>
+                        <div class="big">🎉 Bravo !!! L'article était : <b>{session_state.article.title}</b></div>
+                        <div class="big">Essais : {len(session_state.guesses)}</div>
+                        <a class="wiki" href="{session_state.article.url}" target="_blank">Voir sur Wikipédia</a>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -193,11 +195,11 @@ def main():
                     )
         
         def on_guess_change():
-            guess = st.session_state.guess_input
+            guess = session_state.guess_input
             if guess:  # Only process if there's actual input
                 handle_guess(guess)
                 # Clear the input after processing
-                st.session_state.guess_input = ""
+                session_state.guess_input = ""
 
         # Text input with on_change callback (triggers on Enter key)
         st.markdown(
@@ -210,7 +212,7 @@ def main():
                 left: 12% !important;
                 transform: translateX(-50%) !important;
                 z-index: 999999 !important;
-                padding: 8px 12px !important;
+                padding: 10px 12px !important;
                 border-radius: 12px !important;
                 background: white !important;
                 box-shadow: 0 6px 18px rgba(0,0,0,0.15) !important;
@@ -317,7 +319,7 @@ def main():
             padding: 0.95rem 1.2rem;
             border-radius: 12px;
             box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 500;
             min-height: 50px;
         }}
@@ -329,6 +331,10 @@ def main():
             {content}
         </div>
         """
+
+        # Load words list once
+        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
+            french_words = [line.strip() for line in f]
 
         feedback_content = ""
 
@@ -343,13 +349,19 @@ def main():
                 updated_count = sum(1 for w in session_state.article_words if w.best_guess == last_guess)
 
                 if found_count == 0 and updated_count == 0:
-                    feedback_content = f"❌ <b>{last_guess}</b> : 🟥"
+                    # Check for closest word
+                    close_matches = difflib.get_close_matches(last_guess, french_words, n=1, cutoff=0.7)
+                    close_word = close_matches[0] if close_matches else None
+                    if close_word and close_word != last_guess:
+                        feedback_content = f"❌ Le mot <b>'{last_guess}'</b> n'existe pas, tu voulais dire <b>'{close_word}'</b> ?"
+                    else:
+                        feedback_content = f"❌ <b>'{last_guess}'</b> : 🟥"
                     color = "red"
                 elif found_count == 0:
-                    feedback_content = f"🟠 <b>{last_guess}</b> : {'🟧' * updated_count}"
+                    feedback_content = f"🟠 <b>'{last_guess}'</b> : {'🟧' * updated_count}"
                     color = "orange"
                 else:
-                    feedback_content = f"✅ <b>{last_guess}</b> : {'🟩' * found_count}{'🟧' * updated_count}"
+                    feedback_content = f"✅ <b>'{last_guess}'</b> : {'🟩' * found_count}{'🟧' * updated_count}"
                     color = "green"
         else:
             feedback_content = "💡 Tapez un mot dans la barre !"
