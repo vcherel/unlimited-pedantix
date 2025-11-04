@@ -78,11 +78,14 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[Sim
         if word_info.normalized in session_state.revealed:
             continue
 
-        # Compute cosine similarity
-        word_vec = word_info.embedding
-        if np.all(word_vec == 0):
-            print(f"Warning: Zero word vector for: {word_info.word}")
-        similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
+        # Return 0 if the target word is numeric
+        if word_info.word.isdigit():
+            similarity = 0.0
+        else:
+            word_vec = word_info.embedding
+            if np.all(word_vec == 0):
+                print(f"Warning: Zero word vector for: {word_info.word}")
+            similarity = np.dot(guess_vec, word_vec) / (np.linalg.norm(guess_vec) * np.linalg.norm(word_vec))
 
         similarities.append(SimilarityResult(word=word_info.word, similarity=float(similarity), index=idx))
 

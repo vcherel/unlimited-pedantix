@@ -8,6 +8,7 @@ import fasttext
 import difflib
 import math
 import time
+import re
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
@@ -124,10 +125,16 @@ def process_guess(guess: str):
     found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
     updated_count = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == guess)
 
+
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
+        # Skip close match suggestion if guess is numeric
+        if re.fullmatch(r"\d+", guess.strip()):
+            return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
+
         close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
         close_word = close_matches[0] if close_matches else None    
+
         if close_word and close_word != guess:
             # Automatically handle the corrected guess
             handle_guess(close_word)
@@ -138,7 +145,7 @@ def process_guess(guess: str):
 
     # Provide normal feedback
     if found_count > 0:
-        return f"✅ ''<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
+        return f"✅ '<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
     else:
         return f"🟠 '<b>{guess}</b>': {'🟧'*updated_count}", "orange", ""
 

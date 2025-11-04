@@ -6,7 +6,7 @@ import requests
 import re
 
 from classes import WikipediaPage
-from config import EXCLUDE_STARTS, MAX_PARAGRAPHS, NB_DAYS
+from config import EXCLUDE_STARTS, MIN_WORDS, NB_DAYS
 
 
 headers = {"User-Agent": "PedantixGame/1.0"}
@@ -76,8 +76,9 @@ def is_good_paragraph(p):
     
     return True
 
-def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
-    """Extract clean text from the first paragraphs of HTML content"""
+
+def extract_first_paragraphs(html_content, min_words=MIN_WORDS):
+    """Extract text from the first paragraphs of HTML content until reaching MIN_WORDS"""
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Remove unwanted tags
@@ -88,11 +89,16 @@ def extract_first_paragraphs(html_content, max_paragraphs=MAX_PARAGRAPHS):
             tag.decompose()
     
     paragraphs = []
+    total_words = 0
+
     for p in soup.find_all('p'):
         if is_good_paragraph(p):
             text = re.sub(r'\s+', ' ', re.sub(r'\[\d+\]|\[citation needed\]', '', p.get_text(), flags=re.IGNORECASE)).strip()
+            word_count = len(text.split())
             paragraphs.append(text)
-            if len(paragraphs) >= max_paragraphs:
+            total_words += word_count
+            
+            if total_words >= min_words:
                 break
     
     text = '\n'.join(paragraphs)

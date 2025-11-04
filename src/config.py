@@ -2,8 +2,8 @@
 
 NB_ARTICLES = 100                # Number of articles we fetch in total for one game (the best one is kept)
 NB_DAYS = 30                     # Number of days we will count the views
-MAX_PARAGRAPHS = 8             # Number of paragraphs kept 
-SIMILARITY_THRESHOLD = 0.5      # Minimum similarity to show clue
+MIN_WORDS = 200                  # Minimum number of words in an article
+SIMILARITY_THRESHOLD = 0.5       # Minimum similarity to show clue
 
 # Words to exclude at the beginning of wikipedia paragraph
 EXCLUDE_STARTS = [
