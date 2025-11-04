@@ -116,7 +116,7 @@ def process_guess(guess: str):
         repeated = f"🟠 '<b>{guess}</b>' a déjà été proposé", "orange", ""
     else:
         repeated = None
-    
+
     handle_guess(guess)
 
     if repeated:
@@ -125,21 +125,38 @@ def process_guess(guess: str):
     found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
     updated_count = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == guess)
 
-
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
-        # Skip close match suggestion if guess is numeric
         if re.fullmatch(r"\d+", guess.strip()):
             return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
 
         close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
-        close_word = close_matches[0] if close_matches else None    
+        close_word = close_matches[0] if close_matches else None
 
         if close_word and close_word != guess:
-            # Automatically handle the corrected guess
+            # Handle the corrected guess
             handle_guess(close_word)
-            session_state.guess_input = ""  # Clear input after correction
-            return f"❌ '<b>{guess}</b>' n'est pas présent, tu voulais dire '{close_word}'?", "red", close_word
+
+            # Compute feedback for corrected word
+            found_close = sum(1 for w in session_state.article_words if words_match(close_word, w.word))
+            updated_close = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == close_word)
+
+            if found_close > 0:
+                feedback = f"✅ '<b>{close_word}</b>': {'🟩'*found_close}{'🟧'*updated_close}"
+                color = "green"
+            elif updated_close > 0:
+                feedback = f"🟠 '<b>{close_word}</b>': {'🟧'*updated_close}"
+                color = "orange"
+            else:
+                feedback = f"❌ '<b>{close_word}</b>' n'est pas présent"
+                color = "red"
+
+            session_state.guess_input = ""
+            return (
+                f"❌ '<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",
+                color,
+                close_word,
+            )
         else:
             return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
 
