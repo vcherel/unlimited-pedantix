@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 from classes import WordInfo, SimilarityResult, session_state
 import unicodedata
 import numpy as np
-import re
+import regex
 
 from config import SIMILARITY_THRESHOLD
 
@@ -19,9 +19,10 @@ def normalize_word(word: str) -> str:
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
 def tokenize_text(text, model) -> List[WordInfo]:
-    """Transform words to WordInfo objects, computing embeddings in batch"""
-    pattern = r'\b\w+\b'
-    matches = [m for m in re.finditer(pattern, text, re.UNICODE)]
+    """Transform words to WordInfo objects, computing embeddings in batch, keeping accented Latin letters"""
+    # Match any Latin letter (including accents) and digits
+    pattern = r'\b[\p{Latin}0-9]+\b'
+    matches = [m for m in regex.finditer(pattern, text)]
     
     words = []
     filtered_words = []

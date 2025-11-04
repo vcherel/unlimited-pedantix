@@ -199,7 +199,6 @@ def main():
             session_state.feedback_content = content
             session_state.feedback_color = color
             session_state.guess_input = ""
-            # session_state.guess_input = guess_input  # TODO: use that
 
         # Text input with on_change callback (triggers on Enter key)
         st.markdown(

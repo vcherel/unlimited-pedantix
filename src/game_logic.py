@@ -113,7 +113,6 @@ def process_guess(guess):
 
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
-        print(guess, type(session_state.all_words))
         close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
         close_word = close_matches[0] if close_matches else None    
         if close_word and close_word != guess:
