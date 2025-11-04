@@ -85,11 +85,101 @@ def is_good_paragraph(p):
 
     return True
 
+def latex_to_plain(text):
+    """Convert LaTeX mathematical expressions to readable plain text"""
+    
+    # Remove display style commands
+    text = re.sub(r'\\displaystyle\s*', '', text)
+    text = re.sub(r'\\textstyle\s*', '', text)
+    text = re.sub(r'\\scriptstyle\s*', '', text)
+    
+    # Handle fractions: \frac{a}{b} or \dfrac{a}{b} -> (a/b)
+    def replace_frac(match):
+        num = match.group(1)
+        den = match.group(2)
+        return f"({num}/{den})"
+    text = re.sub(r'\\d?frac\{([^{}]+)\}\{([^{}]+)\}', replace_frac, text)
+    
+    # Handle square roots: \sqrt{x} -> √x or sqrt(x)
+    text = re.sub(r'\\sqrt\{([^{}]+)\}', r'√\1', text)
+    
+    # Handle superscripts: x^{2} or x^2 -> x²
+    superscript_map = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', 
+                       '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+                       'n': 'ⁿ', 'i': 'ⁱ', '+': '⁺', '-': '⁻', '=': '⁼'}
+    def replace_superscript(match):
+        exp = match.group(1).strip('{}')
+        if len(exp) == 1 and exp in superscript_map:
+            return superscript_map[exp]
+        return f"^({exp})"
+    text = re.sub(r'\^(\{[^{}]+\}|\S)', replace_superscript, text)
+    
+    # Handle subscripts: x_{i} or x_i -> xᵢ
+    subscript_map = {'0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+                     '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+                     'i': 'ᵢ', 'j': 'ⱼ', 'n': 'ₙ', 'a': 'ₐ', 'e': 'ₑ',
+                     'o': 'ₒ', 'x': 'ₓ'}
+    def replace_subscript(match):
+        sub = match.group(1).strip('{}')
+        if len(sub) == 1 and sub in subscript_map:
+            return subscript_map[sub]
+        return f"_({sub})"
+    text = re.sub(r'_(\{[^{}]+\}|\S)', replace_subscript, text)
+    
+    # Greek letters
+    greek_map = {
+        'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': 'ε',
+        'zeta': 'ζ', 'eta': 'η', 'theta': 'θ', 'iota': 'ι', 'kappa': 'κ',
+        'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ', 'pi': 'π',
+        'rho': 'ρ', 'sigma': 'σ', 'tau': 'τ', 'phi': 'φ', 'chi': 'χ',
+        'psi': 'ψ', 'omega': 'ω',
+        'Gamma': 'Γ', 'Delta': 'Δ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Xi': 'Ξ',
+        'Pi': 'Π', 'Sigma': 'Σ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Omega': 'Ω'
+    }
+    for latex, unicode in greek_map.items():
+        text = re.sub(r'\\' + latex + r'\b', unicode, text)
+    
+    # Common math symbols
+    text = re.sub(r'\\infty\b', '∞', text)
+    text = re.sub(r'\\sum\b', '∑', text)
+    text = re.sub(r'\\prod\b', '∏', text)
+    text = re.sub(r'\\int\b', '∫', text)
+    text = re.sub(r'\\partial\b', '∂', text)
+    text = re.sub(r'\\nabla\b', '∇', text)
+    text = re.sub(r'\\cdot\b', '·', text)
+    text = re.sub(r'\\times\b', '×', text)
+    text = re.sub(r'\\pm\b', '±', text)
+    text = re.sub(r'\\leq\b', '≤', text)
+    text = re.sub(r'\\geq\b', '≥', text)
+    text = re.sub(r'\\neq\b', '≠', text)
+    text = re.sub(r'\\approx\b', '≈', text)
+    text = re.sub(r'\\equiv\b', '≡', text)
+    text = re.sub(r'\\in\b', '∈', text)
+    text = re.sub(r'\\subset\b', '⊂', text)
+    text = re.sub(r'\\subseteq\b', '⊆', text)
+    text = re.sub(r'\\cup\b', '∪', text)
+    text = re.sub(r'\\cap\b', '∩', text)
+    text = re.sub(r'\\emptyset\b', '∅', text)
+    text = re.sub(r'\\forall\b', '∀', text)
+    text = re.sub(r'\\exists\b', '∃', text)
+    text = re.sub(r'\\rightarrow\b', '→', text)
+    text = re.sub(r'\\Rightarrow\b', '⇒', text)
+    text = re.sub(r'\\leftarrow\b', '←', text)
+    text = re.sub(r'\\Leftarrow\b', '⇐', text)
+    
+    # Remove remaining backslashes and braces
+    text = re.sub(r'\\[a-zA-Z]+\s*', '', text)
+    text = re.sub(r'[{}]', '', text)
+    
+    # Clean up multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+    
+    return text.strip()
 
 def extract_first_paragraphs(html_content, min_words=MIN_WORDS):
     """Extract text from the first paragraphs of HTML content until reaching MIN_WORDS"""
     soup = BeautifulSoup(html_content, 'html.parser')
-
+    
     # Remove unwanted tags
     for tag in soup.find_all(['style', 'script', 'sup']):
         tag.decompose()
@@ -97,12 +187,32 @@ def extract_first_paragraphs(html_content, min_words=MIN_WORDS):
         if tag.get('href', '').startswith('#cite'):
             tag.decompose()
     
+    # Handle math formulas in spans with class 'mwe-math-element'
+    for math_span in soup.find_all('span', class_='mwe-math-element'):
+        # Try to get the LaTeX from img alt text or annotation
+        latex_text = ''
+        img = math_span.find('img')
+        if img and img.get('alt'):
+            latex_text = img.get('alt')
+        elif math_span.find('annotation'):
+            latex_text = math_span.find('annotation').get_text()
+        
+        if latex_text:
+            plain_math = latex_to_plain(latex_text)
+            math_span.replace_with(plain_math)
+    
     paragraphs = []
     total_words = 0
-
     for p in soup.find_all('p'):
         if is_good_paragraph(p):
-            text = re.sub(r'\s+', ' ', re.sub(r'\[\d+\]|\[citation needed\]', '', p.get_text(), flags=re.IGNORECASE)).strip()
+            text = p.get_text()
+            # Remove citation markers
+            text = re.sub(r'\[\d+\]|\[citation needed\]', '', text, flags=re.IGNORECASE)
+            # Apply additional LaTeX cleanup in case there's any remaining
+            text = latex_to_plain(text)
+            # Clean up whitespace
+            text = re.sub(r'\s+', ' ', text).strip()
+            
             word_count = len(text.split())
             paragraphs.append(text)
             total_words += word_count
