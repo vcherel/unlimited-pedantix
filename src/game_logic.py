@@ -76,6 +76,10 @@ def load_game(language, update_spinner_func):
         
         update_spinner_func("Finito !")
         time.sleep(0.2)
+
+        session_state.language = language
+        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
+            session_state.all_words = [line.strip() for line in f]
         
         session_state.article = article
         session_state.article_words = article_words
@@ -88,7 +92,6 @@ def load_game(language, update_spinner_func):
         session_state.model = model
         session_state.game_won = False
 
-        
         return True
     except Exception as e:
         print(f"Error in load_game: {e}")

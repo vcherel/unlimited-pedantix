@@ -52,7 +52,6 @@ def main():
 
         # Spinner
         if selected_language:
-            session_state.language = selected_language
             st.empty()
             spinner_placeholder = st.empty()
             def update_spinner(status_text=""):
@@ -108,11 +107,6 @@ def main():
                 st.error("Erreur chargement du jeu.")
                 session_state.language = None
             return
-        
-    else:
-        # Load words # TODO: make it once
-        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
-            session_state.all_words = [line.strip() for line in f]
 
     # Game interface
     if session_state.article and session_state.article_words:
