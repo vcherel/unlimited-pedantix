@@ -104,9 +104,22 @@ def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
     """
     return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
 
-def process_guess(guess):
+def process_guess(guess: str):
     """Logic to handle a guess including feedback and suggestions"""
+    guess = guess.strip().lower()
+    if not guess:
+        return
+
+    # Check for repeated guess
+    if normalize_word(guess) in session_state.guesses:
+        repeated = f"🟠 '<b>{guess}</b>' a déjà été proposé", "orange", ""
+    else:
+        repeated = None
+    
     handle_guess(guess)
+
+    if repeated:
+        return repeated
 
     found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
     updated_count = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == guess)
@@ -119,22 +132,18 @@ def process_guess(guess):
             # Automatically handle the corrected guess
             handle_guess(close_word)
             session_state.guess_input = ""  # Clear input after correction
-            return f"❌ '{guess}' n'est pas présent, tu voulais dire '{close_word}'?", "red", close_word
+            return f"❌ '<b>{guess}</b>' n'est pas présent, tu voulais dire '{close_word}'?", "red", close_word
         else:
-            return f"❌ '{guess}' n'est pas présent", "red", ""
+            return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
 
     # Provide normal feedback
     if found_count > 0:
-        return f"✅ '{guess}': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
+        return f"✅ ''<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
     else:
-        return f"🟠 '{guess}': {'🟧'*updated_count}", "orange", ""
+        return f"🟠 '<b>{guess}</b>': {'🟧'*updated_count}", "orange", ""
 
 def handle_guess(guess: str):
     """Handle one word guess"""
-    guess = guess.strip().lower()
-    if not guess:
-        return
-
     session_state.guesses.append(guess)
 
     # Check if the guess matches any individual words
