@@ -1,10 +1,10 @@
-# Enhanced Pedantix
+# Unlimited Pedantix
 
 This game is an offline version of [Pedantix](https://pedantix.certitudes.org/), a daily word puzzle by [Enigmatix](https://x.com/enigmathix).
 
 In the original, a random Wikipedia page is selected each day. Players guess words, which are revealed if they appear in the article; similar words also provide clues. However, you can only play one page per day.
 
-To overcome this limitation, I created my own version: **Enhanced Pedantix**, offering endless puzzles to solve.
+To overcome this limitation, I created my own version: **Unlimited Pedantix**, offering endless puzzles to solve.
 
 ## Installation
 

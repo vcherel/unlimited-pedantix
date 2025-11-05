@@ -8,7 +8,7 @@ from classes import session_state
 
 
 def main():
-    st.set_page_config(page_title="Pedantix amélioré", page_icon="🎮", layout="wide")
+    st.set_page_config(page_title="Pedantix Illimité", page_icon="🎮", layout="wide")
 
     # Language selection
     if session_state.language is None:
