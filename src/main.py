@@ -1,9 +1,10 @@
 import streamlit.components.v1 as components
 import streamlit as st
+import asyncio
 
 from game_logic import load_game, process_guess
-from classes import session_state
 from ui_utils import display_article
+from classes import session_state
 
 
 def main():
@@ -98,7 +99,7 @@ def main():
                 spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
             
             update_spinner()
-            success = load_game(selected_language, update_spinner)
+            success = asyncio.run(load_game(selected_language, update_spinner))
             spinner_placeholder.empty()
             
             if success:
@@ -248,7 +249,7 @@ def main():
         
         # JavaScript to auto-focus and capture keyboard input
         components.html(
-            """<script>
+            r"""<script>
             const setupAutoFocus = () => {
                 const parentDoc = window.parent.document;
                 const input = parentDoc.querySelector('input[aria-label="input"]');

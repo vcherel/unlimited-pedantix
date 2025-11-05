@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, TYPE_CHECKING
+import aiohttp
 import numpy as np
 import traceback
 import fasttext
 import difflib
-import math
+import asyncio
 import time
+import math
 import re
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
@@ -20,38 +21,46 @@ if TYPE_CHECKING:
     from classes import WikipediaPage
 
 
-def fetch_candidate(language):
-    """Fetch one wikipedia article and the views"""
+async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tuple[str, int] | None:
+    """Asynchronously fetch one wikipedia article title and its views."""
     try:
-        title = fetch_random_title(language)
-        views = fetch_page_views(language, title)
-        return title, views
-    
+        title = await fetch_random_title(session, language)
+        views = await fetch_page_views(session, language, title)
+        
+        if views > 0:
+            return title, views
+        return None
+    except aiohttp.ClientError as e:
+        print(f"Client error for a candidate: {e}")
+        return None
     except Exception as e:
-        print(f"Error in load_game: {e}")
+        print(f"Unexpected error for a candidate: {e}")
         traceback.print_exc()
-        return False
+        return None
 
-def load_game(language, update_spinner_func):
+async def load_game(language, update_spinner_func):
     """Choose the wikipedia article for the game"""
     try:
         update_spinner_func("Choix de l'article en cours...")
         time.sleep(0.2)
         
-        candidates = []
-        with ThreadPoolExecutor(max_workers=NB_ARTICLES) as executor:
-            futures = [executor.submit(fetch_candidate, language) for _ in range(NB_ARTICLES)]
-            for future in as_completed(futures):
-                result = future.result()
-                if result:
-                    candidates.append(result)
-        
+        # Use a single session for all requests for connection pooling
+        async with aiohttp.ClientSession() as session:
+            tasks = [fetch_candidate(session, language) for _ in range(NB_ARTICLES)]
+            
+            # Run all tasks in parallel
+            results = await asyncio.gather(*tasks)
+            
+            # Filter out failed/None results
+            candidates = [result for result in results if result is not None]
+
         if not candidates:
-            return False
+            print("No candidates were successfully fetched.")
+            return []
         
+        # Sort the results by view count
         candidates.sort(key=lambda x: x[1], reverse=True)
         
-        # Print top 5 articles and their views
         print("\nTop 5 articles by views:")
         for title, views in candidates[:5]:
             print(f"  {title}: {views} views")

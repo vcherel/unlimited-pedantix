@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
-import traceback
 from urllib.parse import quote
 from bs4 import BeautifulSoup
+import traceback
 import requests
+import aiohttp
 import re
 
 from classes import WikipediaPage
@@ -11,32 +12,34 @@ from config import EXCLUDE_STARTS, MIN_WORDS, NB_DAYS
 
 headers = {"User-Agent": "PedantixGame/1.0"}
 
-def fetch_random_title(language):
-    """Fetch a random Wikipedia page title for a given language"""
+async def fetch_random_title(session: aiohttp.ClientSession, language: str) -> str:
+    """Fetch a random Wikipedia page title asynchronously for a given language."""
     url = f"https://{language}.wikipedia.org/api/rest_v1/page/random/summary"
     
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()['title']
+    async with session.get(url, headers=headers) as response:
+        response.raise_for_status()
+        data = await response.json()
+        return data['title']
 
-def fetch_page_views(language, title):
-    """Get total page views in the last NB_DAYS days for a Wikipedia page"""
+async def fetch_page_views(session: aiohttp.ClientSession, language: str, title: str) -> int:
+    """Get total page views in the last NB_DAYS days for a Wikipedia page asynchronously."""
     try:
-        # Constructe url
-        encoded_title = quote(title)
+        encoded_title = quote(title, safe='')
         end_date = datetime.now()
         start_date = end_date - timedelta(days=NB_DAYS)
-        url = f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/{language}.wikipedia/all-access/all-agents/{encoded_title}/daily/{start_date.strftime('%Y%m%d')}/{end_date.strftime('%Y%m%d')}"
         
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            # Sum daily views to get total views for last NB_DAYS days
-            return sum(item.get('views', 0) for item in response.json().get('items', []))
-        return 0
+        url = (
+            f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+            f"{language}.wikipedia/all-access/all-agents/{encoded_title}/daily/"
+            f"{start_date.strftime('%Y%m%d')}/{end_date.strftime('%Y%m%d')}"
+        )
 
-    except Exception as e:
-        print(f"Error in load_game: {e}")
-        traceback.print_exc()
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                return sum(item.get('views', 0) for item in data.get('items', []))
+            return 0
+    except Exception:
         return 0
 
 def fetch_wikipedia_content(title, language):
