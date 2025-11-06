@@ -6,16 +6,7 @@ In the original, a random Wikipedia page is selected each day. Players guess wor
 
 To overcome this limitation, I created my own version: **Unlimited Pedantix**, offering endless puzzles to solve.
 
-## Gameplay
-
-Here’s what the game looks like while playing:
-
 <img src="assets/game.png" alt="Gameplay" style="box-shadow: 4px 4px 10px rgba(0,0,0,0.3);" width="600">
-
-And here’s the screen after winning:
-
-<img src="assets/finish.png" alt="Victory Screen" style="box-shadow: 4px 4px 10px rgba(0,0,0,0.3);" width="600">
-
 
 ## Installation
 
