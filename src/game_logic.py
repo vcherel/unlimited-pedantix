@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import os
 from typing import List, TYPE_CHECKING
-import aiohttp
+import compress_fasttext.models
 import numpy as np
 import traceback
-import fasttext
 import difflib
 import asyncio
+import aiohttp
 import time
 import math
 import re
+
+import requests
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
@@ -80,7 +83,20 @@ async def load_game(language, update_spinner_func):
         update_spinner_func("Préparation de l'IA tueuse...")
         time.sleep(0.2)
         
-        model = fasttext.load_model(f'models/cc.{language}.300.bin')
+        model_path = f'models/fasttext-{language}-mini'
+        os.makedirs('models', exist_ok=True)
+
+        # Check if model file exists
+        if not os.path.exists(model_path):
+            print(f"Model not found at {model_path}. Downloading...")
+            url = f'https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1'
+            response = requests.get(url)
+            with open(model_path, 'wb') as f:
+                f.write(response.content)
+            print("Download complete.")
+
+        # Load the model
+        model = compress_fasttext.models.CompressedFastTextKeyedVectors.load(f'models/fasttext-{language}-mini')
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
         

@@ -1,43 +1,16 @@
-from __future__ import annotations
-
 from classes import WordInfo, SimilarityResult, session_state
-from typing import TYPE_CHECKING, List, Tuple
+from typing import List, Tuple
 import unicodedata
 import numpy as np
 import regex
 
 from config import SIMILARITY_THRESHOLD
 
-if TYPE_CHECKING:
-    import fasttext
-
 
 def normalize_word(word: str) -> str:
     """Put word to normalized format (no accent, no capital letter)"""
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
-
-def get_batch_embeddings(model, filtered_words):
-    """
-    Optimized word vector retrieval using ID lookup for in-vocabulary words
-    and standard get_word_vector for OOV words.
-    """
-    embeddings = []
-
-    for word in filtered_words:
-        word_id = model.get_word_id(word)
-
-        if word_id >= 0:
-            # Use the faster direct input vector retrieval for in-vocabulary words
-            vector = model.get_input_vector(word_id)
-        else:
-            # Fall back to the standard (slower) method for OOV words
-            # which correctly computes the vector from subwords (n-grams)
-            vector = model.get_word_vector(word)
-
-        embeddings.append(vector)
-
-    return np.array(embeddings)
 
 def tokenize_text(text: str, model) -> List['WordInfo']:
     """Transform words to WordInfo objects, computing embeddings in batch, keeping accented Latin letters"""
@@ -61,7 +34,7 @@ def tokenize_text(text: str, model) -> List['WordInfo']:
     # Batch Compute Embeddings
     if not filtered_words:
         return []
-    embeddings = get_batch_embeddings(model, filtered_words)
+    embeddings = np.array([model[word] for word in filtered_words])
     
     # Build WordInfo objects
     for i, word in enumerate(filtered_words):
@@ -83,16 +56,16 @@ def words_match(guess: str, target: str) -> bool:
             return True
     return False
 
-def embed_word(text:str, model: fasttext.FastText._FastText) -> np.ndarray:
+def embed_word(text:str, model) -> np.ndarray:
     """Transform a word into an embedding"""
     words = text.split()
     vectors = []
     for word in words:
-        vectors.append(model.get_word_vector(word))
+        vectors.append(model[word])
     if vectors:
         return np.mean(vectors, axis=0)
     else:
-        return np.zeros(model.get_dimension())
+        return np.zeros(300)
 
 def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[SimilarityResult]:
     """Compute similarity between the guess vector and the words from the text"""
@@ -100,7 +73,6 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[Sim
 
     guess_norm = np.linalg.norm(guess_vec)
     if guess_norm == 0:
-        print("Warning: Zero guess vector — skipping similarity computation.")
         return []
 
     for idx, word_info in enumerate(words):
@@ -114,7 +86,6 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[Sim
             word_norm = np.linalg.norm(word_vec)
 
             if word_norm == 0:
-                print(f"Warning: Zero word vector for: {word_info.word}")
                 similarity = 0.0
             else:
                 similarity = np.dot(guess_vec, word_vec) / (guess_norm * word_norm)

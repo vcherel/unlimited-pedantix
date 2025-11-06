@@ -2,6 +2,7 @@ streamlit
 requests
 beautifulsoup4
 numpy
-fasttext
 regex
 aiohttp
+compress-fasttext
+scikit-learn
