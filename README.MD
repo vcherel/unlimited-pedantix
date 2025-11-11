@@ -29,7 +29,7 @@ A web navigator window will open with the game in it.
 ## Technical implemantation
 
 To ensure engaging gameplay, the random Wikipedia page is selected through a quality-filtering process to avoids obscure pages while maintaining variety:
-- An initial pool of 200 random articles is fetched.
+- An initial pool of 300 random articles is fetched.
 - The system then selects the article with the highest number of visits over the past 30 days.
 
 *The pool size and popularity metric can be adjusted in `src/config.py`.*
