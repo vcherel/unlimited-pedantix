@@ -84,7 +84,7 @@ def display_article():
                         color = f"rgb({red},{green},0)"
                 else:
                     # Previous guesses: grayscale
-                    gray = int(80 + 200 * norm_similarity)
+                    gray = int(90 + 210 * norm_similarity)
                     color = f"rgb({gray},{gray},{gray})"
                 
                 parts.append(f"""<span style='position: relative; display: inline-block; 

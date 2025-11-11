@@ -153,7 +153,7 @@ def process_guess(guess: str):
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
         if re.fullmatch(r"\d+", guess.strip()):
-            return f"❌ '<b>{guess}</b>' n'est pas présent", "red", ""
+            return f"'<b>{guess}</b>': 🟥", "red", ""
 
         close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
         close_word = close_matches[0] if close_matches else None
@@ -173,7 +173,7 @@ def process_guess(guess: str):
                 feedback = f"{'🟧'*updated_close}"
                 color = "orange"
             else:
-                feedback = f"❌"
+                feedback = f"🟥"
                 color = "red"
 
             session_state.guess_input = ""
