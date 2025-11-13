@@ -148,7 +148,7 @@ def process_guess(guess: str):
         return repeated
 
     found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
-    updated_count = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == guess)
+    updated_count = sum(1 for w in session_state.article_words if w.best_guess == guess)
 
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
@@ -164,7 +164,7 @@ def process_guess(guess: str):
 
             # Compute feedback for corrected word
             found_close = sum(1 for w in session_state.article_words if words_match(close_word, w.word))
-            updated_close = sum(1 for w in session_state.article_words if getattr(w, "best_guess", "") == close_word)
+            updated_close = sum(1 for w in session_state.article_words if w.best_guess == close_word)
 
             if found_close > 0:
                 feedback = f"{'🟩'*found_close}{'🟧'*updated_close}"
@@ -219,7 +219,8 @@ def handle_guess(guess: str):
         # Existing embedding-based logic
         guess_vec = embed_word(normalize_word(guess), session_state.model)
         if np.all(guess_vec == 0):
-            print(f"Warning: Zero word vector for guess: {guess}")
+            # print(f"Warning: Zero word vector for guess: {guess}")
+            pass
 
         similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
 
