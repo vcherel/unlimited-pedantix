@@ -193,7 +193,7 @@ def process_guess(guess: str):
 
 def handle_guess(guess: str):
     """Handle one word guess"""
-    session_state.guesses.append(guess)
+    session_state.guesses.append(normalize_word(guess))
 
     # Check if the guess matches any individual words
     for word_info in session_state.article_words:
