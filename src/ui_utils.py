@@ -23,7 +23,7 @@ def display_article():
             parts.append(source_text[current_pos:word_info.start])
             
             # Determine if this word is affected by the last guess
-            is_last_guess = (word_info.best_guess == last_guess)
+            is_last_guess = words_match(word_info.best_guess, last_guess)
             # Check if the word was just fully revealed by the last guess
             just_revealed = (word_info.normalized in session_state.revealed and words_match(last_guess, word_info.word))
             
@@ -43,6 +43,7 @@ def display_article():
             elif word_info.normalized in session_state.revealed:
                 # Previously revealed words: normal green bold text
                 parts.append(f"<span style='color: #27AE60; font-weight: bold;'>{word_info.word}</span>")
+
             # Check for revealed_end words that haven't been fully guessed/revealed yet
             elif word_info.normalized in session_state.revealed_end:
                 word_length = len(word_info.word)
@@ -64,6 +65,7 @@ def display_article():
                 norm_similarity = max(0, min(norm_similarity, 1))
                 guess_length = max(len(word_info.best_guess), len(word_info.word))
                 box_width = f"{guess_length * 0.6 + 1.6}em"
+
                 if is_last_guess:
                     # Most recent guess: gradient for similar, green for exact
                     if norm_similarity >= 1:  # exact match
@@ -79,6 +81,7 @@ def display_article():
                             red = int(255 * (1 - ratio))
                             green = 255
                         color = f"rgb({red},{green},0)"
+                        
                 else:
                     # Previous guesses: grayscale
                     gray = int(90 + 210 * norm_similarity)

@@ -63,7 +63,7 @@ class SessionState:
     article_words: List[WordInfo] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
     title_words: List[WordInfo] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
     revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
-    revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))
+    revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))  # List of normalized word revealed
     guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
     guess_input: str = property(lambda self: cast(str, self._get('guess_input')), lambda self, v: self._set('guess_input', v))
     feedback_content: str = property(lambda self: cast(str, self._get('feedback_content')), lambda self, v: self._set('feedback_content', v))

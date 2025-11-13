@@ -196,7 +196,7 @@ def main():
             guess = session_state.guess_input
             if not guess:
                 return
-            content, color, guess_input = process_guess(guess)
+            content, color = process_guess(guess)
             session_state.feedback_content = content
             session_state.feedback_color = color
             session_state.guess_input = ""

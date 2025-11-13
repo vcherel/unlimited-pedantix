@@ -1,10 +1,10 @@
-from classes import WordInfo, SimilarityResult, session_state
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import unicodedata
 import numpy as np
 import regex
 
 from config import SIMILARITY_THRESHOLD
+from classes import WordInfo, SimilarityResult, session_state
 
 
 def normalize_word(word: str) -> str:
@@ -43,8 +43,11 @@ def tokenize_text(text: str, model) -> List['WordInfo']:
     
     return words
 
-def words_match(guess: str, target: str) -> bool:
+def words_match(guess: Optional[str], target: Optional[str]) -> bool:
     """Check if two words match"""
+    if guess is None or target is None:
+        return False
+
     guess_norm, target_norm = normalize_word(guess), normalize_word(target)
     if guess_norm == target_norm:
         return True

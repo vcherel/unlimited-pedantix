@@ -138,7 +138,7 @@ def process_guess(guess: str):
 
     # Check for repeated guess
     if normalize_word(guess) in session_state.guesses:
-        repeated = f"'<b>{guess}</b>' a déjà été proposé", "orange", ""
+        repeated = f"'<b>{guess}</b>' a déjà été proposé", "orange"
     else:
         repeated = None
 
@@ -153,7 +153,7 @@ def process_guess(guess: str):
     # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
         if re.fullmatch(r"\d+", guess.strip()):
-            return f"'<b>{guess}</b>': 🟥", "red", ""
+            return f"'<b>{guess}</b>': 🟥", "red"
 
         close_matches = difflib.get_close_matches(guess, session_state.all_words, n=1, cutoff=0.7)
         close_word = close_matches[0] if close_matches else None
@@ -177,19 +177,16 @@ def process_guess(guess: str):
                 color = "red"
 
             session_state.guess_input = ""
-            return (
-                f"'<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",
-                color,
-                close_word,
-            )
+            return f"'<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",color
+
         else:
-            return f"'<b>{guess}</b>' : 🟥", "red", ""
+            return f"'<b>{guess}</b>' : 🟥", "red"
 
     # Provide normal feedback
     if found_count > 0:
-        return f"'<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green", ""
+        return f"'<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green"
     else:
-        return f"'<b>{guess}</b>': {'🟧'*updated_count}", "orange", ""
+        return f"'<b>{guess}</b>': {'🟧'*updated_count}", "orange"
 
 def handle_guess(guess: str):
     """Handle one word guess"""
@@ -198,10 +195,12 @@ def handle_guess(guess: str):
     # Check if the guess matches any individual words
     for word_info in session_state.article_words:
         if words_match(guess, word_info.word):
+            word_info.best_similarity = 1
             session_state.revealed.add(word_info.normalized)
 
     for word_info in session_state.title_words:
         if words_match(guess, word_info.word):
+            word_info.best_similarity = 1
             session_state.revealed.add(word_info.normalized)
 
     if guess.isdigit():
