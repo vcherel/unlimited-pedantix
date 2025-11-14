@@ -194,12 +194,12 @@ def main():
         
         def on_guess_change():
             guess = session_state.guess_input
+            session_state.guess_input = ""
             if not guess:
                 return
             content, color = process_guess(guess)
             session_state.feedback_content = content
             session_state.feedback_color = color
-            session_state.guess_input = ""
 
         # Text input with on_change callback (triggers on Enter key)
         st.markdown(
