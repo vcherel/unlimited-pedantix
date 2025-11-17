@@ -45,11 +45,21 @@ def main():
                 st.markdown(ui.get_spinner_effect(status_text), unsafe_allow_html=True)
             updated_spinner()
 
-            success = asyncio.run(
+            success_dict = asyncio.run(
                 load_game(selected_language, updated_spinner, session_state)
             )
             
-            if success:
+            if success_dict:
+                session_state.language = selected_language
+                session_state.article = success_dict['article']
+                session_state.article_words = success_dict['article_words']
+                session_state.title_words = success_dict['title_words']
+                session_state.model = success_dict['model']
+
+                # Load dict with all words from the language
+                with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
+                    session_state.all_words = [line.strip() for line in f]
+
                 st.rerun()
             else:
                 st.error("Erreur chargement du jeu.")
@@ -58,16 +68,23 @@ def main():
 
     # Game interface
     if session_state.article and session_state.article_words:
+
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
+
+        # Display language
         with col1:
             language_map = {
                 "en": "anglais",
                 "fr": "français"
             }
             st.markdown(f"### Jeu en {language_map.get(session_state.language, session_state.language)}")
+        
+        # Display number of tries
         with col2:
             st.metric("Essais", len(session_state.guesses))
+
+        # Display progress
         with col3:
             revealed_count = len(session_state.revealed)
             total_unique = len(set(w.normalized for w in session_state.article_words))

@@ -101,23 +101,13 @@ async def load_game(language, update_spinner_func, session_state: SessionState):
         
         update_spinner_func("Finito !")
         time.sleep(0.2)
-
-        session_state.language = language
-        with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
-            session_state.all_words = [line.strip() for line in f]
-        
-        session_state.article = article
-        session_state.article_words = article_words
-        session_state.title_words = title_words
-        session_state.revealed = set()
-        session_state.revealed_end = set()
-        session_state.guesses = []
-        session_state.feedback_content = "💡 Tapez un mot dans la barre !"
-        session_state.feedback_color = "555"
-        session_state.model = model
-        session_state.game_won = False
-
-        return True
+        return {
+            'article': article,
+            'article_words': article_words,
+            'title_words': title_words,
+            'model': model
+        }
+    
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()
