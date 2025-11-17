@@ -152,7 +152,16 @@ def get_keyboard_focus():
                 return;
             }
             
-            // Focus immediately
+            // Clear input on Enter
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    setTimeout(() => {
+                        input.value = '';
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }, 50);
+                }
+            });
+            
             input.focus();
             
             // Capture keyboard events
