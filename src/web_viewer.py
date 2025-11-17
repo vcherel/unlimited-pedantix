@@ -3,7 +3,7 @@ import streamlit as st
 import asyncio
 
 from classes import SessionState
-from ui_utils import display_article
+from display_article import display_article
 from game_logic import load_game, process_guess
 
 

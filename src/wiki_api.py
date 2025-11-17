@@ -63,6 +63,7 @@ def fetch_wikipedia_content(title, language):
         )
 
 def is_good_paragraph(p):
+    """Detect if a paragrpah has interesting text (no redirection text, or table)"""
     text: str = p.get_text().strip()
     word_count = len(text.split())
 
