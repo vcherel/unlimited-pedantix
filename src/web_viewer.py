@@ -2,6 +2,7 @@ import streamlit.components.v1 as components
 import streamlit as st
 import asyncio
 
+import ui_components as ui
 from classes import SessionState
 from display_article import display_article
 from game_logic import load_game, process_guess
@@ -14,16 +15,7 @@ def main():
     # Language selection
     if session_state.language is None:
         # Big buttons
-        st.markdown("""
-            <style>
-            .stButton > button {
-                height: 100px !important;
-            }
-            .stButton > button p {
-                font-size: 50px !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        st.markdown(ui.get_language_button(), unsafe_allow_html=True)
 
         # Add vertical spacing to center on page
         st.markdown("<div style='margin-top: 20vh;'></div>", unsafe_allow_html=True)
@@ -32,14 +24,7 @@ def main():
         _, col_center, _ = st.columns([1, 2, 1])
         
         with col_center:
-            st.markdown(
-                """
-                <h1 style='text-align: center; margin-bottom: 20px;'>
-                    Choisis une langue pour jouer :
-                </h1>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(ui.get_main_menu_text(), unsafe_allow_html=True)
 
             selected_language = None
 
@@ -52,56 +37,17 @@ def main():
                 if st.button("🇬🇧", use_container_width=True):
                     selected_language = 'en'
 
-        # Spinner
+        # Loading pinner
         if selected_language:
-            st.empty()
-            spinner_placeholder = st.empty()
-            def update_spinner(status_text=""):
-                spinner_html = f"""
-                <style>
-                .spinner-container {{
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    z-index: 9999;
-                    background-color: rgba(255, 255, 255, 0.95);
-                }}
-                .spinner {{
-                    border: 8px solid #f3f3f3;
-                    border-top: 8px solid #3498db;
-                    border-radius: 50%;
-                    width: 80px;
-                    height: 80px;
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 30px;
-                }}
-                .status-text {{
-                    font-size: 18px;
-                    color: #333;
-                    font-weight: 500;
-                    text-align: center;
-                }}
-                @keyframes spin {{
-                    0% {{ transform: rotate(0deg); }}
-                    100% {{ transform: rotate(360deg); }}
-                }}
-                </style>
-                <div class="spinner-container">
-                    <div class="spinner"></div>
-                    <div class="status-text">{status_text}</div>
-                </div>
-                """
-                spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
-            
-            update_spinner()
-            success = asyncio.run(load_game(selected_language, update_spinner, session_state))
-            spinner_placeholder.empty()
+
+            # Show where we are in the game loading
+            def updated_spinner(status_text=""):
+                st.markdown(ui.get_spinner_effect(status_text), unsafe_allow_html=True)
+            updated_spinner()
+
+            success = asyncio.run(
+                load_game(selected_language, updated_spinner, session_state)
+            )
             
             if success:
                 st.rerun()
@@ -134,14 +80,14 @@ def main():
                 """
                 <style>
                 .winbar {
-                    background: linear-gradient(135deg, #66ff99, #33cc7a); /* softer green */
+                    background: linear-gradient(135deg, #66ff99, #33cc7a);
                     border-radius: 20px;
                     padding: 1.2rem 2rem;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     gap: 2rem;
-                    box-shadow: 0 8px 24px rgba(102,255,153,0.4); /* softer shadow */
+                    box-shadow: 0 8px 24px rgba(102,255,153,0.4);
                     margin-bottom: 2rem;
                 }
                 .winbar .big {

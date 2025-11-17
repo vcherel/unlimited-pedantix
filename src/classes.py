@@ -33,7 +33,7 @@ class WordInfo:
 class SessionState:
     _defaults: Dict[str, Any] = {
         'language': None,           # The language we play the game with ('en' or 'fr')
-        'all_words': list[str],     # List of all words in the language
+        'all_words': [],            # List of all words in the language
         'article': None,            # The fetched article (WikipediaPage type)
         'article_words': [],        # The words of the article (WordInfo type)
         'title_words': [],          # The words of the title
