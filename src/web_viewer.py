@@ -2,10 +2,10 @@ import streamlit.components.v1 as components
 import streamlit as st
 import asyncio
 
-import ui_components as ui
+import ui.ui_components as ui
 from classes import SessionState
-from display_article import display_article
-from game_logic import load_game, process_guess
+from ui.display_article import display_article
+from game.game_logic import load_game, process_guess
 
 
 def main():

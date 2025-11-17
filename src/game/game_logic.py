@@ -14,12 +14,12 @@ import re
 
 import requests
 
-from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
-from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
+from game.wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
+from game.embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
 from config import NB_ARTICLES
 
 if TYPE_CHECKING:
-    from embedding_utils import SimilarityResult
+    from game.embedding_utils import SimilarityResult
     from classes import WikipediaPage, SessionState
 
 

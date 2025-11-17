@@ -4,7 +4,7 @@ from typing import List, TYPE_CHECKING
 import streamlit as st
 
 from config import SIMILARITY_THRESHOLD
-from embedding_utils import words_match
+from game.embedding_utils import words_match
 
 if TYPE_CHECKING:
     from classes import WordInfo, SessionState
