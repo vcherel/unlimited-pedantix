@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 Simply run:
 ```bash
-streamlit run src/main.py
+streamlit run src/web_viewer.py
 ```
 A web navigator window will open with the game in it.
 
