@@ -9,11 +9,11 @@ from game.game_logic import load_game, process_guess
 
 
 def main():
-    session_state = SessionState()
+    state = SessionState()
     st.set_page_config(page_title="Pedantix Illimité", page_icon="🎮", layout="wide")
 
     # Language selection
-    if session_state.language is None:
+    if state.language is None:
         # Big buttons
         st.markdown(ui.get_language_button(), unsafe_allow_html=True)
 
@@ -46,28 +46,28 @@ def main():
             updated_spinner()
 
             success_dict = asyncio.run(
-                load_game(selected_language, updated_spinner, session_state)
+                load_game(selected_language, updated_spinner, state)
             )
             
             if success_dict:
-                session_state.language = selected_language
-                session_state.article = success_dict['article']
-                session_state.article_words = success_dict['article_words']
-                session_state.title_words = success_dict['title_words']
-                session_state.model = success_dict['model']
+                state.language = selected_language
+                state.article = success_dict['article']
+                state.article_words = success_dict['article_words']
+                state.title_words = success_dict['title_words']
+                state.model = success_dict['model']
 
                 # Load dict with all words from the language
-                with open(f"data/words_{session_state.language}.txt", encoding="utf-8") as f:
-                    session_state.all_words = [line.strip() for line in f]
+                with open(f"data/words_{state.language}.txt", encoding="utf-8") as f:
+                    state.all_words = [line.strip() for line in f]
 
                 st.rerun()
             else:
                 st.error("Erreur chargement du jeu.")
-                session_state.language = None
+                state.language = None
             return
 
     # Game interface
-    if session_state.article and session_state.article_words:
+    if state.article and state.article_words:
 
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
@@ -78,92 +78,47 @@ def main():
                 "en": "anglais",
                 "fr": "français"
             }
-            st.markdown(f"### Jeu en {language_map.get(session_state.language, session_state.language)}")
+            st.markdown(f"### Jeu en {language_map.get(state.language, state.language)}")
         
         # Display number of tries
         with col2:
-            st.metric("Essais", len(session_state.guesses))
+            st.metric("Essais", len(state.guesses))
 
         # Display progress
         with col3:
-            revealed_count = len(session_state.revealed)
-            total_unique = len(set(w.normalized for w in session_state.article_words))
+            revealed_count = len(state.revealed)
+            total_unique = len(set(w.normalized for w in state.article_words))
             st.metric("Progression", f"{revealed_count}/{total_unique} ({round(revealed_count / total_unique * 100, 1)}%)")
 
         # Winner interface
-        if session_state.game_won:
+        if state.game_won:
             st.balloons()
-            st.markdown(
-                """
-                <style>
-                .winbar {
-                    background: linear-gradient(135deg, #66ff99, #33cc7a);
-                    border-radius: 20px;
-                    padding: 1.2rem 2rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 2rem;
-                    box-shadow: 0 8px 24px rgba(102,255,153,0.4);
-                    margin-bottom: 2rem;
-                }
-                .winbar .big {
-                    font-size: 2.2rem;
-                    font-weight: 800;
-                    color: #fff;
-                    text-shadow: 0 2px 4px rgba(0,0,0,.25);
-                }
-                .winbar a.wiki {
-                    font-size: 1.6rem;
-                    color: #fff;
-                    text-decoration: none;
-                    border: 2px solid #fff;
-                    border-radius: 12px;
-                    padding: .4rem 1rem;
-                    transition: .25s;
-                }
-                .winbar a.wiki:hover {
-                    background: #fff;
-                    color: #33cc7a;
-                }
-                """,
-                unsafe_allow_html=True,
-            )
+            st.markdown(ui.get_winner_style(), unsafe_allow_html=True)
 
-            bar = st.container()
-            with bar:
-                st.markdown(
-                    f"""
-                    <div class="winbar">
-                        <div class="big">🎉 Bravo !!! L'article était : <b>{session_state.article.title}</b></div>
-                        <div class="big">Essais : {len(session_state.guesses)}</div>
-                        <a class="wiki" href="{session_state.article.url}" target="_blank">Voir sur Wikipédia</a>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            st.markdown(
+                ui.get_winner_bar(state.article.title, len(state.guesses), state.article.url), unsafe_allow_html=True,)
 
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 if st.button("Rejouer", type="primary", use_container_width=True):
-                    session_state.reset()
+                    state.reset()
                     st.rerun()
 
             with col3:
                 if st.button("Afficher tout", use_container_width=True):
-                    session_state.revealed_end.update(
-                        word_info.normalized for word_info in session_state.article_words
-                        if word_info.normalized not in session_state.revealed
+                    state.revealed_end.update(
+                        word_info.normalized for word_info in state.article_words
+                        if word_info.normalized not in state.revealed
                     )
         
         def on_guess_change():
-            guess = session_state.guess_input
-            session_state.guess_input = ""
+            guess = state.guess_input
+            state.guess_input = ""
             if not guess:
                 return
-            content, color = process_guess(guess, session_state)
-            session_state.feedback_content = content
-            session_state.feedback_color = color
+            content, color = process_guess(guess, state)
+            state.feedback_content = content
+            state.feedback_color = color
 
         # Text input with on_change callback (triggers on Enter key)
         st.markdown(
@@ -297,10 +252,10 @@ def main():
         """
 
         # Inject the floating feedback box
-        st.markdown(feedback_html.format(content=f"<p style='color:{session_state.feedback_color}'>{session_state.feedback_content}</p>"), unsafe_allow_html=True)
+        st.markdown(feedback_html.format(content=f"<p style='color:{state.feedback_color}'>{state.feedback_content}</p>"), unsafe_allow_html=True)
 
         # Article display
-        display_article(session_state)
+        display_article(state)
 
         _, col_center, _ = st.columns([2, 1, 2])
 
@@ -317,7 +272,7 @@ def main():
                 </style>
             """, unsafe_allow_html=True)
             if st.button("Main menu", use_container_width=True):
-                session_state.reset()
+                state.reset()
                 st.rerun()
 
 

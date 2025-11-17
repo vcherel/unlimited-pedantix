@@ -18,7 +18,7 @@ def get_main_menu_text():
         </h1>
     """
 
-def get_spinner_effect(status_text):
+def get_spinner_effect(status_text: str):
     return f"""
         <style>
         .spinner-container {{
@@ -57,5 +57,49 @@ def get_spinner_effect(status_text):
         <div class="spinner-container">
             <div class="spinner"></div>
             <div class="status-text">{status_text}</div>
+        </div>
+    """
+
+def get_winner_style():
+    return """
+        <style>
+        .winbar {
+            background: linear-gradient(135deg, #66ff99, #33cc7a);
+            border-radius: 20px;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            box-shadow: 0 8px 24px rgba(102,255,153,0.4);
+            margin-bottom: 2rem;
+        }
+        .winbar .big {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,.25);
+        }
+        .winbar a.wiki {
+            font-size: 1.6rem;
+            color: #fff;
+            text-decoration: none;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            padding: .4rem 1rem;
+            transition: .25s;
+        }
+        .winbar a.wiki:hover {
+            background: #fff;
+            color: #33cc7a;
+        }
+    """
+
+def get_winner_bar(title: str, nb_guesses: int, url: str):
+    return f"""
+        <div class="winbar">
+            <div class="big">🎉 Bravo !!! L'article était : <b>{title}</b></div>
+            <div class="big">Essais : {nb_guesses}</div>
+            <a class="wiki" href="{url}" target="_blank">Voir sur Wikipédia</a>
         </div>
     """
