@@ -110,7 +110,10 @@ def main():
                         word_info.normalized for word_info in state.article_words
                         if word_info.normalized not in state.revealed
                     )
-        
+
+        # Text input (triggers on Enter key)
+        st.markdown(ui.get_text_input(), unsafe_allow_html=True,)
+
         def on_guess_change():
             guess = state.guess_input
             state.guess_input = ""
@@ -118,9 +121,6 @@ def main():
             content, color = process_guess(guess, state)
             state.feedback_content = content
             state.feedback_color = color
-
-        # Text input (triggers on Enter key)
-        st.markdown(ui.get_text_input(), unsafe_allow_html=True,)
 
         st.text_input(
             "input",
