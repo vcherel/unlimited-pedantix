@@ -2,12 +2,13 @@ import streamlit.components.v1 as components
 import streamlit as st
 import asyncio
 
-from game_logic import load_game, process_guess
+from classes import SessionState
 from ui_utils import display_article
-from classes import session_state
+from game_logic import load_game, process_guess
 
 
 def main():
+    session_state = SessionState()
     st.set_page_config(page_title="Pedantix Illimité", page_icon="🎮", layout="wide")
 
     # Language selection
@@ -99,7 +100,7 @@ def main():
                 spinner_placeholder.markdown(spinner_html, unsafe_allow_html=True)
             
             update_spinner()
-            success = asyncio.run(load_game(selected_language, update_spinner))
+            success = asyncio.run(load_game(selected_language, update_spinner, session_state))
             spinner_placeholder.empty()
             
             if success:
@@ -182,7 +183,7 @@ def main():
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 if st.button("Rejouer", type="primary", use_container_width=True):
-                    session_state.language = None
+                    session_state.reset()
                     st.rerun()
 
             with col3:
@@ -197,7 +198,7 @@ def main():
             session_state.guess_input = ""
             if not guess:
                 return
-            content, color = process_guess(guess)
+            content, color = process_guess(guess, session_state)
             session_state.feedback_content = content
             session_state.feedback_color = color
 
@@ -336,7 +337,7 @@ def main():
         st.markdown(feedback_html.format(content=f"<p style='color:{session_state.feedback_color}'>{session_state.feedback_content}</p>"), unsafe_allow_html=True)
 
         # Article display
-        display_article()
+        display_article(session_state)
 
         _, col_center, _ = st.columns([2, 1, 2])
 
@@ -353,7 +354,7 @@ def main():
                 </style>
             """, unsafe_allow_html=True)
             if st.button("Main menu", use_container_width=True):
-                session_state.language = None
+                session_state.reset()
                 st.rerun()
 
 

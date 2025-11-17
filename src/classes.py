@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional, List, Set, Any, TYPE_CHECKING
+from typing import Dict, Optional, List, Set, Any, TYPE_CHECKING, cast
+from dataclasses import dataclass
 import streamlit as st
 
 if TYPE_CHECKING:
@@ -30,29 +30,48 @@ class WordInfo:
     best_similarity: float = 0.0        # Its similarity score
 
 
-@dataclass
 class SessionState:
-    language: Optional[str] = None
-    all_words: List[str] = field(default_factory=list)
-    article: Optional[WikipediaPage] = None
-    article_words: List[WordInfo] = field(default_factory=list)
-    title_words: List[WordInfo] = field(default_factory=list)
-    revealed: Set[str] = field(default_factory=set)
-    revealed_end: Set[str] = field(default_factory=set)
-    guess_input: str = ""
-    guesses: List[str] = field(default_factory=list)
-    feedback_content: str = ""
-    feedback_color: str = ""
-    model: Optional[Any] = None
-    game_won: bool = False
+    _defaults: Dict[str, Any] = {
+        'language': None,           # The language we play the game with ('en' or 'fr')
+        'all_words': list[str],     # List of all words in the language
+        'article': None,            # The fetched article (WikipediaPage type)
+        'article_words': [],        # The words of the article (WordInfo type)
+        'title_words': [],          # The words of the title
+        'revealed': set(),          # Set of revealed words
+        'revealed_end': set(),      # Set of revealed words at the end
+        'guess_input': "",          # The user's input
+        'guesses': [],              # List of guesses made
+        'feedback_content': str,    # Feedback for the last guess
+        'feedback_color': str,      # Color of the feedback
+        'model': None,              # Fasttext model
+        'game_won': False           # State of the game
+    }
+
+    def __init__(self):
+        for key, value in self._defaults.items():
+            st.session_state.setdefault(key, value)
+
+    def _get(self, key: str) -> Any:
+        return st.session_state.get(key, self._defaults[key])
+
+    def _set(self, key: str, value: Any):
+        st.session_state[key] = value
     
-    @classmethod
-    def initialize(cls):
-        """Initialize session state if it doesn't exist"""
-        if 'state' not in st.session_state:
-            st.session_state.state = cls()
-        return st.session_state.state
+    def reset(self):
+        keys_to_delete = list(st.session_state.keys())
+        for key in keys_to_delete:
+            del st.session_state[key]
 
-
-# Global instance
-session_state = SessionState.initialize()
+    language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
+    all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
+    article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
+    article_words: List[WordInfo] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
+    title_words: List[WordInfo] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
+    revealed: Set[str] = property(lambda self: cast(Set[str], self._get('revealed')), lambda self, v: self._set('revealed', v))
+    revealed_end: Set[str] = property(lambda self: cast(Set[str], self._get('revealed_end')), lambda self, v: self._set('revealed_end', v))  # List of normalized word revealed
+    guesses: List[str] = property(lambda self: cast(List[str], self._get('guesses')), lambda self, v: self._set('guesses', v))
+    guess_input: str = property(lambda self: cast(str, self._get('guess_input')), lambda self, v: self._set('guess_input', v))
+    feedback_content: str = property(lambda self: cast(str, self._get('feedback_content')), lambda self, v: self._set('feedback_content', v))
+    feedback_color: str = property(lambda self: cast(str, self._get('feedback_color')), lambda self, v: self._set('feedback_color', v))
+    model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))
+    game_won: bool = property(lambda self: self._get('game_won'), lambda self, v: self._set('game_won', v))

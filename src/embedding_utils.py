@@ -4,7 +4,7 @@ import numpy as np
 import regex
 
 from config import SIMILARITY_THRESHOLD
-from classes import WordInfo, SimilarityResult, session_state
+from classes import WordInfo, SimilarityResult
 
 
 def normalize_word(word: str) -> str:
@@ -70,7 +70,7 @@ def embed_word(text:str, model) -> np.ndarray:
     else:
         return np.zeros(300)
 
-def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[SimilarityResult]:
+def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo], revealed: List[str]) -> List[SimilarityResult]:
     """Compute similarity between the guess vector and the words from the text"""
     similarities: List[SimilarityResult] = []
 
@@ -79,7 +79,7 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo]) -> List[Sim
         return []
 
     for idx, word_info in enumerate(words):
-        if word_info.normalized in session_state.revealed:
+        if word_info.normalized in revealed:
             continue
 
         if word_info.word.isdigit():

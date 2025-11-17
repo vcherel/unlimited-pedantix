@@ -4,17 +4,16 @@ from typing import List, TYPE_CHECKING
 import streamlit as st
 
 from config import SIMILARITY_THRESHOLD
-from classes import session_state
 from embedding_utils import words_match
 
 if TYPE_CHECKING:
-    from classes import WordInfo
+    from classes import WordInfo, SessionState
 
 
-def display_article():
+def display_article(session_state: SessionState):
     """Display the article text with revealed/similar words shown"""
     
-    def build_display_parts(word_list: List[WordInfo], source_text, last_guess: str = None):
+    def build_display_parts(word_list: List[WordInfo], source_text:str, last_guess: str = None):
         """Build HTML parts for displaying text with revealed/similar words"""
         parts = []
         current_pos = 0

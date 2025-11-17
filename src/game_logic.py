@@ -16,12 +16,11 @@ import requests
 
 from wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 from embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
-from classes import session_state
 from config import NB_ARTICLES
 
 if TYPE_CHECKING:
     from embedding_utils import SimilarityResult
-    from classes import WikipediaPage
+    from classes import WikipediaPage, SessionState
 
 
 async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tuple[str, int] | None:
@@ -41,7 +40,7 @@ async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tupl
         traceback.print_exc()
         return None
 
-async def load_game(language, update_spinner_func):
+async def load_game(language, update_spinner_func, session_state: SessionState):
     """Choose the wikipedia article for the game"""
     try:
         update_spinner_func("Choix de l'article en cours...")
@@ -125,12 +124,10 @@ async def load_game(language, update_spinner_func):
         return False
     
 def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
-    """
-    Compute a smooth similarity between two numbers.
-    """
+    """Compute a smooth similarity between two numbers"""
     return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
 
-def process_guess(guess: str):
+def process_guess(guess: str, session_state: SessionState):
     """Logic to handle a guess including feedback and suggestions"""
     guess = guess.strip().lower()
     if not guess:
@@ -142,7 +139,7 @@ def process_guess(guess: str):
     else:
         repeated = None
 
-    handle_guess(guess)
+    handle_guess(guess, session_state)
 
     if repeated:
         return repeated
@@ -160,7 +157,7 @@ def process_guess(guess: str):
 
         if close_word and close_word != guess:
             # Handle the corrected guess
-            handle_guess(close_word)
+            handle_guess(close_word, session_state)
 
             # Compute feedback for corrected word
             found_close = sum(1 for w in session_state.article_words if words_match(close_word, w.word))
@@ -188,7 +185,7 @@ def process_guess(guess: str):
     else:
         return f"'<b>{guess}</b>': {'🟧'*updated_count}", "orange"
 
-def handle_guess(guess: str):
+def handle_guess(guess: str, session_state: SessionState):
     """Handle one word guess"""
     session_state.guesses.append(normalize_word(guess))
 
@@ -221,7 +218,7 @@ def handle_guess(guess: str):
             # print(f"Warning: Zero word vector for guess: {guess}")
             pass
 
-        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words)
+        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words, session_state.revealed)
 
         for result in similar_results:
             word_info = session_state.article_words[result.index]
