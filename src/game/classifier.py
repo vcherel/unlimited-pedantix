@@ -5,14 +5,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 from abc import ABC, abstractmethod
-from datetime import datetime
 from sklearn.svm import SVC
 from pathlib import Path
 import xgboost as xgb
 from tqdm import tqdm
 import numpy as np
 import hashlib
-import random
 import json
 import os
 
@@ -143,7 +141,7 @@ def prepare_data(records, sentence_model):
     record_ids = []
     texts = []
     scores = []
-    
+
     for r in records:
         record_id = hashlib.md5(
             f"{r['title']}".encode()
@@ -216,7 +214,7 @@ def prepare_data(records, sentence_model):
     y = np.array(scores)
     return X, y
 
-def train_models(nb_iter=100, use_smote=True):
+def train_models(nb_iter=100, language='fr', use_smote=True):
     """Train models nb_iter times and print average statistics"""
     print("Loading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
@@ -224,6 +222,8 @@ def train_models(nb_iter=100, use_smote=True):
     
     if not records:
         return
+    else:
+        records = records[language]
     
     sentence_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     X, y = prepare_data(records, sentence_model)
@@ -249,7 +249,7 @@ def train_models(nb_iter=100, use_smote=True):
     for name, avg, std in avg_results:
         print(f"{name:30} : {avg * 100:.1f}% ± {std * 100:.1f}%")
 
-def choose_title(titles, use_smote=True):
+def choose_title(titles, language, use_smote=True):
     """Train models, pick the best one, show one example, score the results"""
     print("Loading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
@@ -257,6 +257,8 @@ def choose_title(titles, use_smote=True):
     
     if not records:
         return
+    else:
+        records = records[language]
     
     sentence_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     X, y = prepare_data(records, sentence_model)
