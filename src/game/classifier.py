@@ -294,9 +294,6 @@ def choose_title(titles, language, use_smote=True):
     embeddings = np.array([sentence_model.encode(title) for title in titles])
     scores = best_model.predict_proba(embeddings)[:, 1]
 
-    for score, title in zip(scores, titles):
-        print(f"{title}: {score}")
-
     # Return first title with good score
     for i, score in enumerate(scores):
         if score > SCORE_THRESHOLD:
