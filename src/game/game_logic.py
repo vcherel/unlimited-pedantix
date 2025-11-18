@@ -105,7 +105,8 @@ async def load_game(language, update_spinner_func, session_state: SessionState):
             'article': article,
             'article_words': article_words,
             'title_words': title_words,
-            'model': model
+            'model': model,
+            'wikipedia_choices': [t for t, _ in candidates[:20]]
         }
     
     except Exception as e:

@@ -35,6 +35,8 @@ class SessionState:
         'language': None,           # The language we play the game with ('en' or 'fr')
         'all_words': [],            # List of all words in the language
         'article': None,            # The fetched article (WikipediaPage type)
+        'titles': [],               # The list of potential titles that could have been chosen
+        'liked_titles': [],         # The titles that the user liked
         'article_words': [],        # The words of the article (WordInfo type)
         'title_words': [],          # The words of the title
         'model': None,              # Fasttext model
@@ -65,6 +67,8 @@ class SessionState:
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
     article: Optional[WikipediaPage] = property(lambda self: self._get('article'), lambda self, v: self._set('article', v))
+    titles: List[str] = property(lambda self: self._get('titles'), lambda self, v: self._set('titles', v))
+    liked_titles: List[str] = property(lambda self: self._get('liked_titles'), lambda self, v: self._set('liked_titles', v))
     article_words: List[WordInfo] = property(lambda self: self._get('article_words'), lambda self, v: self._set('article_words', v))
     title_words: List[WordInfo] = property(lambda self: self._get('title_words'), lambda self, v: self._set('title_words', v))
     model: Optional[Any] = property(lambda self: self._get('model'), lambda self, v: self._set('model', v))

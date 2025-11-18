@@ -1,6 +1,8 @@
 import streamlit.components.v1 as components
 import streamlit as st
 import asyncio
+import json
+import os
 
 import ui.ui_components as ui
 from classes import SessionState
@@ -55,6 +57,7 @@ def main():
                 state.article_words = success_dict['article_words']
                 state.title_words = success_dict['title_words']
                 state.model = success_dict['model']
+                state.titles = success_dict['wikipedia_choices']
 
                 # Load dict with all words from the language
                 with open(f"data/words_{state.language}.txt", encoding="utf-8") as f:
@@ -92,7 +95,6 @@ def main():
 
         # Winner interface
         if state.game_won:
-            st.balloons()
             st.markdown(ui.get_winner_style(), unsafe_allow_html=True)
 
             st.markdown(
@@ -100,7 +102,28 @@ def main():
 
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                if st.button("Rejouer", type="primary", use_container_width=True):
+                if st.button("Rejouer", type="primary", use_container_width=True):    # Save dataset
+                    os.makedirs("output", exist_ok=True)
+                    dataset_path = "output/dataset.json"
+                    
+                    # Load existing data
+                    if os.path.exists(dataset_path):
+                        with open(dataset_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                    else:
+                        data = {'en': [], 'fr': []}
+                    
+                    # Add current ratings
+                    for title in state.titles:
+                        data[state.language].append({
+                            'title': title,
+                            'score': 1 if title in state.liked_titles else 0
+                        })
+                    
+                    # Save
+                    with open(dataset_path, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                    
                     state.reset()
                     st.rerun()
 
@@ -139,6 +162,24 @@ def main():
         display_article(state)
 
         _, col_center, _ = st.columns([2, 1, 2])
+
+        # Display rating system
+        if state.game_won:
+            st.markdown("### Note les autres choix potentiels de page :")
+            col1, col2 = st.columns(2)
+            for i, wiki_title in enumerate(state.titles):
+                with col1 if i % 2 == 0 else col2:
+                    if st.button(
+                        wiki_title,
+                        key=f"wiki_{i}",
+                        type="primary" if wiki_title in state.liked_titles else "secondary",
+                        use_container_width=True
+                    ):
+                        if wiki_title in state.liked_titles:
+                            state.liked_titles.remove(wiki_title)
+                        else:
+                            state.liked_titles.append(wiki_title)
+                        st.rerun()
 
         # Main menu button
         with col_center:
