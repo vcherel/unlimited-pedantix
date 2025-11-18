@@ -6,6 +6,8 @@ In the original, a random Wikipedia page is selected each day. Players guess wor
 
 To overcome this limitation, I created my own version: **Unlimited Pedantix**, offering endless puzzles to solve.
 
+Another interesting feature of this game is that after each game, we can vote on which page we would have liked to play. This vote is then saved and used by a classifier to select more relevant articles in subsequent games.
+
 <div style="text-align: center;">
   <img src="assets/game.png" alt="Gameplay" style="box-shadow: 4px 4px 10px rgba(0,0,0,0.3);">
 </div>
@@ -29,8 +31,9 @@ A web navigator window will open with the game in it.
 ## Technical implemantation
 
 To ensure engaging gameplay, the random Wikipedia page is selected through a quality-filtering process to avoids obscure pages while maintaining variety:
-- An initial pool of 300 random articles is fetched.
-- The system then selects the article with the highest number of visits over the past 30 days.
+- An initial pool of 100 random articles is fetched.
+- The 10 articles with the highest number of visits over the past 30 days are then selected.
+- A classifier trained on the user's tastes is then used to select the more relevant article.
 
 *The pool size and popularity metric can be adjusted in `src/config.py`.*
 
