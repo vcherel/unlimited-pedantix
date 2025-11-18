@@ -72,9 +72,7 @@ def main():
                 st.markdown(ui.get_spinner_effect(status_text), unsafe_allow_html=True)
             updated_spinner()
 
-            success_dict = asyncio.run(
-                load_game(selected_language, updated_spinner, state)
-            )
+            success_dict = asyncio.run(load_game(selected_language, updated_spinner))
             
             if success_dict:
                 state.language = selected_language

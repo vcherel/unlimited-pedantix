@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import List, TYPE_CHECKING
 import compress_fasttext.models
 import numpy as np
@@ -8,15 +7,17 @@ import traceback
 import difflib
 import asyncio
 import aiohttp
+import requests
 import time
 import math
 import re
+import os
 
-import requests
 
-from game.wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
+from game.classifier import choose_title
+from config import NB_ARTICLES, NB_ARTICLES_CLASSIFIER
 from game.embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
-from config import NB_ARTICLES
+from game.wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 
 if TYPE_CHECKING:
     from game.embedding_utils import SimilarityResult
@@ -40,10 +41,10 @@ async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tupl
         traceback.print_exc()
         return None
 
-async def load_game(language, update_spinner_func, session_state: SessionState):
+async def load_game(language, update_spinner_func):
     """Choose the wikipedia article for the game"""
     try:
-        update_spinner_func("Choix de l'article en cours...")
+        update_spinner_func("Récupération d'articles aléatoires...")
         time.sleep(0.2)
         
         # Use a single session for all requests for connection pooling
@@ -67,7 +68,12 @@ async def load_game(language, update_spinner_func, session_state: SessionState):
         for title, views in candidates[:10]:
             print(f"  {title}: {views} views")
         
-        best_title = candidates[0][0]
+        update_spinner_func("Sélection du meilleur titre...")
+        time.sleep(0.2)
+
+        titles = [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]]
+        best_title = choose_title(titles, language)
+        
         print(f"\n~~~~ {best_title} ~~~~")
         
         update_spinner_func(f"Récupération de l'article...")

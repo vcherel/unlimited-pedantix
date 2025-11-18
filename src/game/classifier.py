@@ -216,7 +216,7 @@ def prepare_data(records, sentence_model):
 
 def train_models(nb_iter=100, language='fr', use_smote=True):
     """Train models nb_iter times and print average statistics"""
-    print("Loading dataset...")
+    print("\nLoading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
         records = json.load(f)
     
@@ -259,6 +259,12 @@ def choose_title(titles, language, use_smote=True):
         return
     else:
         records = records[language]
+    
+    nb_pos = sum(1 for r in records if r['score'])
+    nb_neg = sum(1 for r in records if not r['score'])
+    if nb_pos < 6 or nb_neg < 6:
+        print("Warning: Not enough data in the dataset: taking best one")
+        return titles[0]
     
     sentence_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     X, y = prepare_data(records, sentence_model)
