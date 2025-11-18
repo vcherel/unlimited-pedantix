@@ -64,8 +64,8 @@ async def load_game(language, update_spinner_func):
         # Sort the results by view count
         candidates.sort(key=lambda x: x[1], reverse=True)
         
-        print("\nTop 10 articles by views:")
-        for title, views in candidates[:10]:
+        print(f"\nTop {NB_ARTICLES_CLASSIFIER} articles by views:")
+        for title, views in candidates[:NB_ARTICLES_CLASSIFIER]:
             print(f"  {title}: {views} views")
         
         update_spinner_func("Sélection du meilleur titre...")

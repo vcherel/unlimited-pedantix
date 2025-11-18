@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional, List, Set, Any, TYPE_CHECKING, cast
 from dataclasses import dataclass
+from copy import deepcopy
 import streamlit as st
 
 if TYPE_CHECKING:
@@ -60,10 +61,9 @@ class SessionState:
         st.session_state[key] = value
     
     def reset(self):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
         for key, value in self._defaults.items():
-            st.session_state[key] = value
+            if key != "guess_input": # Cannot modify this as it is used dynamically
+                st.session_state[key] = deepcopy(value)
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
