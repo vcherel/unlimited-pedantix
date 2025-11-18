@@ -216,7 +216,7 @@ def prepare_data(records, sentence_model):
 
 def train_models(nb_iter=100, language='fr', use_smote=True):
     """Train models nb_iter times and print average statistics"""
-    print("\nLoading dataset...")
+    print("Loading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
         records = json.load(f)
     
@@ -251,7 +251,7 @@ def train_models(nb_iter=100, language='fr', use_smote=True):
 
 def choose_title(titles, language, use_smote=True):
     """Train models, pick the best one, show one example, score the results"""
-    print("Loading dataset...")
+    print("\nLoading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
         records = json.load(f)
     

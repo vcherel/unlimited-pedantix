@@ -60,9 +60,10 @@ class SessionState:
         st.session_state[key] = value
     
     def reset(self):
-        keys_to_delete = list(st.session_state.keys())
-        for key in keys_to_delete:
+        for key in list(st.session_state.keys()):
             del st.session_state[key]
+        for key, value in self._defaults.items():
+            st.session_state[key] = value
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
