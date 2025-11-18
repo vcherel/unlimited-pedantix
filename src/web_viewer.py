@@ -10,6 +10,31 @@ from ui.display_article import display_article
 from game.game_logic import load_game, process_guess
 
 
+def save_liked_articles(titles, liked_titles, language):
+        """Save liked titles"""
+        if liked_titles:
+            # Save dataset
+            os.makedirs("output", exist_ok=True)
+            dataset_path = "output/dataset.json"
+            
+            # Load existing data
+            if os.path.exists(dataset_path):
+                with open(dataset_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            else:
+                data = {'en': [], 'fr': []}
+            
+            # Add current ratings
+            for title in titles:
+                data[language].append({
+                    'title': title,
+                    'score': 1 if title in liked_titles else 0
+                })
+            
+            # Save
+            with open(dataset_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
 def main():
     state = SessionState()
     st.set_page_config(page_title="Pedantix Illimité", page_icon="🎮", layout="wide")
@@ -102,28 +127,8 @@ def main():
 
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                if st.button("Rejouer", type="primary", use_container_width=True):    # Save dataset
-                    os.makedirs("output", exist_ok=True)
-                    dataset_path = "output/dataset.json"
-                    
-                    # Load existing data
-                    if os.path.exists(dataset_path):
-                        with open(dataset_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                    else:
-                        data = {'en': [], 'fr': []}
-                    
-                    # Add current ratings
-                    for title in state.titles:
-                        data[state.language].append({
-                            'title': title,
-                            'score': 1 if title in state.liked_titles else 0
-                        })
-                    
-                    # Save
-                    with open(dataset_path, 'w', encoding='utf-8') as f:
-                        json.dump(data, f, ensure_ascii=False, indent=2)
-                    
+                if st.button("Rejouer", type="primary", use_container_width=True):
+                    save_liked_articles(state.titles, state.liked_titles, state.language)
                     state.reset()
                     st.rerun()
 
@@ -186,6 +191,7 @@ def main():
             st.markdown(ui.get_main_menu_button(), unsafe_allow_html=True)
             
             if st.button("Main menu", use_container_width=True):
+                save_liked_articles(state.titles, state.liked_titles, state.language)
                 state.reset()
                 st.rerun()
 
