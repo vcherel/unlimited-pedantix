@@ -5,6 +5,7 @@ NB_ARTICLES_CLASSIFIER = 20      # Number of top articles from which the classif
 NB_DAYS = 30                     # Number of days we will count the views
 MIN_WORDS = 250                  # Minimum number of words in an article
 SIMILARITY_THRESHOLD = 0.4       # Minimum similarity to show clue
+SCORE_THRESHOLD = 0.6            # Minimum probability for the classifier to choose a word
 
 # Words to exclude at the beginning of wikipedia paragraph
 EXCLUDE_STARTS = [

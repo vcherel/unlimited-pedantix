@@ -14,6 +14,8 @@ import hashlib
 import json
 import os
 
+from config import SCORE_THRESHOLD
+
 
 class BaseModel(ABC):
     """Base class for all models"""
@@ -290,6 +292,14 @@ def choose_title(titles, language, use_smote=True):
     
     # Score titles and select best one
     embeddings = np.array([sentence_model.encode(title) for title in titles])
-    new_scores = best_model.predict_proba(embeddings)[:, 1]
+    scores = best_model.predict_proba(embeddings)[:, 1]
 
-    return titles[new_scores.argmax()]
+    for score, title in zip(scores, titles):
+        print(f"{title}: {score}")
+
+    # Return first title with good score
+    for i, score in enumerate(scores):
+        if score > SCORE_THRESHOLD:
+            return titles[i]
+        
+    return titles[scores.argmax()]

@@ -112,7 +112,7 @@ async def load_game(language, update_spinner_func):
             'article_words': article_words,
             'title_words': title_words,
             'model': model,
-            'wikipedia_choices': [t for t, _ in candidates[:10]]
+            'wikipedia_choices': [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]]
         }
     
     except Exception as e:
