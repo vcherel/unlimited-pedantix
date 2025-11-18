@@ -249,7 +249,7 @@ def train_models(nb_iter=100, use_smote=True):
     for name, avg, std in avg_results:
         print(f"{name:30} : {avg * 100:.1f}% ± {std * 100:.1f}%")
 
-def train_and_score_titles(use_smote=True):
+def choose_title(titles, use_smote=True):
     """Train models, pick the best one, show one example, score the results"""
     print("Loading dataset...")
     with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
@@ -280,4 +280,8 @@ def train_and_score_titles(use_smote=True):
     y_pred = best_model.predict(X_test)
     print(classification_report(y_test, y_pred, labels=[1, 0], target_names=['Good', 'Bad'], zero_division=0))
     
-    # TODO: use with titles
+    # Score titles and select best one
+    embeddings = np.array([sentence_model.encode(title) for title in titles])
+    new_scores = best_model.predict_proba(embeddings)[:, 1]
+
+    return titles[new_scores.argmax()]
