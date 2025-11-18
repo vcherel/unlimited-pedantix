@@ -5,4 +5,8 @@ numpy
 regex
 aiohttp
 compress-fasttext
+tqdm
 scikit-learn
+xgboost
+imbalanced-learn
+sentence-transformers
