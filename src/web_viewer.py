@@ -14,8 +14,8 @@ def save_liked_articles(titles, liked_titles, language):
         """Save liked titles"""
         if liked_titles:
             # Save dataset
-            os.makedirs("output", exist_ok=True)
-            dataset_path = "output/dataset.json"
+            os.makedirs("data", exist_ok=True)
+            dataset_path = "data/dataset.json"
             
             # Load existing data
             if os.path.exists(dataset_path):
@@ -83,7 +83,7 @@ def main():
                 state.titles = success_dict['wikipedia_choices']
 
                 # Load dict with all words from the language
-                with open(f"data/words_{state.language}.txt", encoding="utf-8") as f:
+                with open(f"vocab/words_{state.language}.txt", encoding="utf-8") as f:
                     state.all_words = [line.strip() for line in f]
 
                 st.rerun()

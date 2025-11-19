@@ -132,9 +132,10 @@ def evaluate_models(X_train, y_train, X_test, y_test, use_smote, balance):
     
     return results, best_model
 
-def prepare_data(records, sentence_model):
-    """Load embeddings or generate them, return X and y"""
-    embeding_folder_path = Path("output/embeddings")
+def prepare_data(records, language):
+    sentence_model = load_model(language)
+
+    embeding_folder_path = Path(f"data/embeddings_{language}")
     embeddings_path = embeding_folder_path / Path("embeddings.npy")
     metadata_path = embeding_folder_path / Path("metadata.json")
     os.makedirs(embeding_folder_path, exist_ok=True)
@@ -214,12 +215,21 @@ def prepare_data(records, sentence_model):
     
     X = embeddings_array
     y = np.array(scores)
-    return X, y
+
+    return X, y, sentence_model
+
+def load_model(language):
+    if language == 'fr':
+        return SentenceTransformer('sentence-transformers/distiluse-base-multilingual-cased-v2')
+    elif language == 'en':
+        return SentenceTransformer('all-MiniLM-L6-v2') 
+    else:
+        raise Exception(f"Language {language} is not accepted")
 
 def train_models(nb_iter=100, language='fr', use_smote=True):
     """Train models nb_iter times and print average statistics"""
     print("Loading dataset...")
-    with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
+    with open(Path("data/dataset.json"), 'r', encoding='utf-8') as f:
         records = json.load(f)
     
     if not records:
@@ -227,8 +237,7 @@ def train_models(nb_iter=100, language='fr', use_smote=True):
     else:
         records = records[language]
     
-    sentence_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-    X, y = prepare_data(records, sentence_model)
+    X, y, _ = prepare_data(records, language)
     
     all_results = {name: [] for name in ['XGBoostModel', 'RandomForestModel', 'LogisticRegressionModel', 'SVMModel']}
     
@@ -254,7 +263,7 @@ def train_models(nb_iter=100, language='fr', use_smote=True):
 def choose_title(titles, language, use_smote=True):
     """Train models, pick the best one, show one example, score the results"""
     print("\nLoading dataset...")
-    with open(Path("output/dataset.json"), 'r', encoding='utf-8') as f:
+    with open(Path("data/dataset.json"), 'r', encoding='utf-8') as f:
         records = json.load(f)
     
     if not records:
@@ -268,8 +277,7 @@ def choose_title(titles, language, use_smote=True):
         print("Warning: Not enough data in the dataset: taking best one")
         return titles[0]
     
-    sentence_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-    X, y = prepare_data(records, sentence_model)
+    X, y, sentence_model = prepare_data(records, language)
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
