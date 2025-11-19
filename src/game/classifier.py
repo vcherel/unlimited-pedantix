@@ -52,44 +52,96 @@ class XGBoostModel(BaseModel):
     def create_model(self):
         if self.use_smote:
             return xgb.XGBClassifier(
-                n_estimators=200,
+                n_estimators=150,
                 max_depth=4,
                 learning_rate=0.05,
                 subsample=0.8,
                 colsample_bytree=0.8,
-                min_child_weight=3,
+                min_child_weight=5,
+                reg_alpha=0.1,
                 reg_lambda=1.0,
+                gamma=0.1,
+                random_state=42
             )
         else:
-            return xgb.XGBClassifier(n_estimators=100, max_depth=5, scale_pos_weight=self.scale)
+            return xgb.XGBClassifier(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                scale_pos_weight=self.scale,
+                subsample=0.9,
+                colsample_bytree=0.8,
+                min_child_weight=3,
+                reg_lambda=1.0,
+                random_state=42
+            )
 
 
 class RandomForestModel(BaseModel):
     def create_model(self):
         if self.use_smote:
             return RandomForestClassifier(
-                n_estimators=300,
-                max_depth=8,
-                min_samples_leaf=4,
+                n_estimators=200,
+                max_depth=6,
+                min_samples_split=10,
+                min_samples_leaf=5,
+                max_features='sqrt',
+                n_jobs=-1,
+                random_state=42
             )
         else:
-            return RandomForestClassifier(n_estimators=100, max_depth=10, class_weight="balanced")
+            return RandomForestClassifier(
+                n_estimators=150,
+                max_depth=8,
+                min_samples_split=5,
+                min_samples_leaf=4,
+                max_features='sqrt',
+                class_weight="balanced",
+                n_jobs=-1,
+                random_state=42
+            )
 
 
 class LogisticRegressionModel(BaseModel):
     def create_model(self):
         if self.use_smote:
-            return LogisticRegression(max_iter=2000, C=0.5)
+            return LogisticRegression(
+                max_iter=1000,
+                C=1.0,
+                penalty='l2',
+                solver='liblinear',
+                random_state=42
+            )
         else:
-            return LogisticRegression(max_iter=1000, class_weight="balanced")
+            return LogisticRegression(
+                max_iter=1000,
+                C=0.8,
+                penalty='l2',
+                class_weight="balanced",
+                solver='liblinear',
+                random_state=42
+            )
 
 
 class SVMModel(BaseModel):
     def create_model(self):
         if self.use_smote:
-            return SVC(kernel='rbf', probability=True)
+            return SVC(
+                kernel='rbf',
+                C=1.0,
+                gamma='scale',
+                probability=True,
+                random_state=42
+            )
         else:
-            return SVC(kernel='rbf', probability=True, class_weight="balanced")
+            return SVC(
+                kernel='rbf',
+                C=0.8,
+                gamma='scale',
+                class_weight="balanced",
+                probability=True,
+                random_state=42
+            )
 
 
 def get_token_attribution(model_obj, text, sentence_model, clf):
