@@ -64,6 +64,7 @@ class SessionState:
         for key, value in self._defaults.items():
             if key != "guess_input": # Cannot modify this as it is used dynamically
                 st.session_state[key] = deepcopy(value)
+        self.__init__()
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
     all_words: List[str] = property(lambda self: cast(List[str], self._get('all_words')), lambda self, v: self._set('all_words', v))
