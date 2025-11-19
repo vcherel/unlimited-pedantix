@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from compress_fasttext.models import CompressedFastTextKeyedVectors
 from typing import List, TYPE_CHECKING
-import compress_fasttext.models
+import fasttext.util
 import numpy as np
 import traceback
+import requests
+import fasttext
 import difflib
 import asyncio
 import aiohttp
-import requests
+import shutil
 import time
 import math
 import re
@@ -15,7 +18,7 @@ import os
 
 
 from game.classifier import choose_title
-from config import NB_ARTICLES, NB_ARTICLES_CLASSIFIER
+from config import NB_ARTICLES, NB_ARTICLES_CLASSIFIER, USE_COMPRESSED_MODEL
 from game.embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
 from game.wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
 
@@ -88,20 +91,31 @@ async def load_game(language, update_spinner_func):
         update_spinner_func("Préparation de l'IA tueuse...")
         time.sleep(0.2)
         
-        model_path = f'models/fasttext-{language}-mini'
-        os.makedirs('models', exist_ok=True)
+        models_dir = "models"
+        os.makedirs(models_dir, exist_ok=True)
 
-        # Check if model file exists
-        if not os.path.exists(model_path):
-            print(f"Model not found at {model_path}. Downloading...")
-            url = f'https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1'
-            response = requests.get(url)
-            with open(model_path, 'wb') as f:
-                f.write(response.content)
-            print("Download complete.")
+        if USE_COMPRESSED_MODEL:
+            model_path = f"{models_dir}/fasttext-{language}-mini"
 
-        # Load the model
-        model = compress_fasttext.models.CompressedFastTextKeyedVectors.load(f'models/fasttext-{language}-mini')
+            if not os.path.exists(model_path):
+                url = f"https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1"
+                r = requests.get(url)
+                with open(model_path, "wb") as f:
+                    f.write(r.content)
+
+            model = CompressedFastTextKeyedVectors.load(model_path)
+
+        else:
+            local_path = f"{models_dir}/cc.{language}.300.bin"
+
+            if not os.path.exists(local_path):
+                fasttext.util.download_model(language, if_exists="ignore")  # downloads to CWD
+                downloaded = f"cc.{language}.300.bin"
+                shutil.move(downloaded, local_path)
+                os.remove(f'cc.{language}.300.bin')
+
+            model = fasttext.load_model(local_path)
+
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
         

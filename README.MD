@@ -32,13 +32,15 @@ A web navigator window will open with the game in it.
 
 To ensure engaging gameplay, the random Wikipedia page is selected through a quality-filtering process to avoids obscure pages while maintaining variety:
 - An initial pool of 150 random articles is fetched.
-- The 10 articles with the highest number of visits over the past 30 days are then selected.
+- The 20 articles with the highest number of visits over the past 30 days are then selected.
 - A classifier trained on the user's tastes is then used to select the more relevant article.
 
-*The pool size and popularity metric can be adjusted in `src/config.py`.*
+*The different parameters can be adjusted in `src/config.py`.*
 
 To detect semantically similar words, this implementation uses FastText instead of Word2Vec (used in the original game), offering two significant advantages:
 - Performance: Faster processing and more efficient memory usage
 - Vocabulary Coverage: Handles out-of-vocabulary words through subword embeddings, eliminating vocabulary limitations entirely
 
 Typical FastText models weigh in at around 7GB, which is way too much for the needs of the project. To address this, I use a compressed version from [Zenodo](https://zenodo.org/records/4905385) by Bernhard Liebl. These embeddings were originally obtained from [fasttext.cc](https://fasttext.cc/docs/en/crawl-vectors.html) and compressed using the [compress-fasttext](https://github.com/avidale/compress-fasttext) library. The resulting model is just 20MB and downloads automatically when needed. We do lose some precision, especially on technical pages, but considering it's 350 times smaller than the original, that's a pretty good trade-off.
+
+*A parameter can be changed in `src/config.py` to use classic fasttext model instead*

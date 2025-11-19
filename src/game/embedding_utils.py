@@ -12,6 +12,11 @@ def normalize_word(word: str) -> str:
     word = word.lower().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
 
+def get_vector(model, word):
+    if hasattr(model, "get_word_vector"):
+        return model.get_word_vector(word)  # classic fasttext
+    return model[word]  # compressed
+
 def tokenize_text(text: str, model) -> List['WordInfo']:
     """Transform words to WordInfo objects, computing embeddings in batch, keeping accented Latin letters"""
     
@@ -34,7 +39,7 @@ def tokenize_text(text: str, model) -> List['WordInfo']:
     # Batch Compute Embeddings
     if not filtered_words:
         return []
-    embeddings = np.array([model[word] for word in filtered_words])
+    embeddings = np.array([get_vector(model, word) for word in filtered_words])
     
     # Build WordInfo objects
     for i, word in enumerate(filtered_words):
