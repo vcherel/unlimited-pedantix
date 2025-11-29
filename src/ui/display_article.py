@@ -31,7 +31,7 @@ def build_display_parts(session_state: SessionState, word_list: List[WordInfo], 
                                                 background-color: #27AE60; width: {box_width}; height: 1.2em; 
                                                 border-radius: 4px; vertical-align: middle; 
                                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
-                        <span style='position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+                        <span style='position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
                                     color: #fff; font-weight: bold; white-space: nowrap;'>{word_info.word}</span>
                         <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{word_length}</span>
                     </span>""")
@@ -49,7 +49,7 @@ def build_display_parts(session_state: SessionState, word_list: List[WordInfo], 
                                                 background-color: #2c3e50; width: {box_width}; height: 1.2em; 
                                                 border-radius: 4px; vertical-align: middle; 
                                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
-                        <span style='position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+                        <span style='position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
                                     color: {color}; font-weight: bold; white-space: nowrap;'>{word_info.word}</span>
                         <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{word_length}</span>
                     </span>""")
@@ -87,7 +87,7 @@ def build_display_parts(session_state: SessionState, word_list: List[WordInfo], 
                                                 background-color: #2c3e50; width: {box_width}; height: 1.2em; 
                                                 border-radius: 4px; vertical-align: middle; 
                                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);'>
-                        <span style='position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+                        <span style='position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
                                     color: {color}; font-weight: bold; white-space: nowrap;'>{word_info.best_guess}</span>
                         <span style='position: absolute; right: 3px; bottom: -1px; font-size: 0.55em; color: #bdc3c7;'>{len(word_info.word)}</span>
                     </span>""")
