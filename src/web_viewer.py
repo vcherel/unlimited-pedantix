@@ -127,7 +127,17 @@ def main():
             with col2:
                 if st.button("Rejouer", type="primary", use_container_width=True):
                     save_liked_articles(state.titles, state.liked_titles, state.language)
-                    state.reset()
+                    state.language = None
+                    state.guesses = []
+                    state.revealed = set()
+                    state.revealed_end = set()
+                    state.game_won = False
+                    state.feedback_color = "555"
+                    state.feedback_content = "💡 Tapez un mot dans la barre !"
+                    state.liked_titles = []
+                    state.article = None
+                    state.article_words = []
+                    state.title_words = []
                     st.rerun()
 
             with col3:
@@ -190,7 +200,17 @@ def main():
             
             if st.button("Main menu", use_container_width=True):
                 save_liked_articles(state.titles, state.liked_titles, state.language)
-                state.reset()
+                state.language = None
+                state.guesses = []
+                state.revealed = set()
+                state.revealed_end = set()
+                state.game_won = False
+                state.feedback_color = "555"
+                state.feedback_content = "💡 Tapez un mot dans la barre !"
+                state.liked_titles = []
+                state.article = None
+                state.article_words = []
+                state.title_words = []
                 st.rerun()
 
 
