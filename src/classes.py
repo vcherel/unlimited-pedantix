@@ -62,8 +62,11 @@ class SessionState:
     
     def reset(self):
         for key, value in self._defaults.items():
-            if key != "guess_input": # Cannot modify this as it is used dynamically
-                st.session_state[key] = deepcopy(value)
+            if key != "guess_input":
+                if isinstance(value, (set, list, dict)):
+                    st.session_state[key] = type(value)()
+                else:
+                    st.session_state[key] = value
         self.__init__()
 
     language: Optional[str] = property(lambda self: self._get('language'), lambda self, v: self._set('language', v))
