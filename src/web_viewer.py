@@ -94,6 +94,24 @@ def main():
 
     # Game interface
     if state.article and state.article_words:
+        with st.sidebar:
+            st.markdown("### 📝 Tentatives")
+
+            guesses_html = ""
+            if state.guesses:
+                for i, guess in reversed(list(enumerate(state.guesses, 1))):
+                    guesses_html += f"<div> <b>{i}.</b> {guess}</div>"
+            else:
+                guesses_html = "<div>Aucune tentative</div>"
+
+            st.markdown(
+                f"""
+                <div style="max-height:60vh; overflow-y:auto; padding:10px;">
+                    {guesses_html}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         # Header stats
         col1, col2, col3 = st.columns([2, 1, 1])
