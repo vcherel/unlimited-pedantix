@@ -95,7 +95,7 @@ def main():
     # Game interface
     if state.article and state.article_words:
         with st.sidebar:
-            st.markdown("### 📝 Tentatives")
+            st.markdown("#### Mots proposés")
 
             guesses_html = ""
             if state.guesses:
@@ -105,11 +105,7 @@ def main():
                 guesses_html = "<div>Aucune tentative</div>"
 
             st.markdown(
-                f"""
-                <div style="max-height:60vh; overflow-y:auto; padding:10px;">
-                    {guesses_html}
-                </div>
-                """,
+                f"""{guesses_html}""",
                 unsafe_allow_html=True
             )
 
