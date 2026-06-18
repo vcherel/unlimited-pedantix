@@ -15,17 +15,15 @@ Another interesting feature of this game is that after each game, we can vote on
 ## Installation
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Usage
 
-Simply run:
 ```bash
-streamlit run src/web_viewer.py
+uv run streamlit run src/web_viewer.py
 ```
+
 A web navigator window will open with the game in it.
 
 ## Technical implemantation

@@ -1,0 +1,26 @@
+[project]
+name = "unlimited-pedantix"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit",
+    "requests",
+    "beautifulsoup4",
+    "numpy",
+    "regex",
+    "aiohttp",
+    "compress-fasttext",
+    "fasttext",
+    "tqdm",
+    "scikit-learn",
+    "xgboost",
+    "imbalanced-learn",
+    "sentence-transformers",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

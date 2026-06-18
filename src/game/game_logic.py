@@ -1,30 +1,41 @@
 from __future__ import annotations
 
-from compress_fasttext.models import CompressedFastTextKeyedVectors
-from typing import List, TYPE_CHECKING
-import fasttext.util
-import numpy as np
-import traceback
-import requests
-import fasttext
-import difflib
 import asyncio
-import aiohttp
+import difflib
+import math
+import os
+import re
 import shutil
 import time
-import math
-import re
-import os
+import traceback
+from typing import TYPE_CHECKING, List
 
+import aiohttp
+import fasttext
+import fasttext.util
+import numpy as np
+import requests
+from compress_fasttext.models import CompressedFastTextKeyedVectors
 
-from game.classifier import choose_title
 from config import NB_ARTICLES, NB_ARTICLES_CLASSIFIER, USE_COMPRESSED_MODEL
-from game.embedding_utils import embed_word, normalize_word, tokenize_text, words_match, compute_similarity
-from game.wiki_api import fetch_random_title, fetch_page_views, fetch_wikipedia_content, extract_first_paragraphs
+from game.classifier import choose_title
+from game.embedding_utils import (
+    compute_similarity,
+    embed_word,
+    normalize_word,
+    tokenize_text,
+    words_match,
+)
+from game.wiki_api import (
+    extract_first_paragraphs,
+    fetch_page_views,
+    fetch_random_title,
+    fetch_wikipedia_content,
+)
 
 if TYPE_CHECKING:
+    from classes import SessionState, WikipediaPage
     from game.embedding_utils import SimilarityResult
-    from classes import WikipediaPage, SessionState
 
 
 async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tuple[str, int] | None:
@@ -32,7 +43,7 @@ async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tupl
     try:
         title = await fetch_random_title(session, language)
         views = await fetch_page_views(session, language, title)
-        
+
         if views > 0:
             return title, views
         return None
@@ -44,53 +55,49 @@ async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tupl
         traceback.print_exc()
         return None
 
+
 async def load_game(language, update_spinner_func):
     """Choose the wikipedia article for the game"""
     try:
         update_spinner_func("Récupération d'articles aléatoires...")
         time.sleep(0.2)
-        
+
         # Use a single session for all requests for connection pooling
         async with aiohttp.ClientSession() as session:
             tasks = [fetch_candidate(session, language) for _ in range(NB_ARTICLES)]
-            
-            # Run all tasks in parallel
             results = await asyncio.gather(*tasks)
-            
-            # Filter out failed/None results
             candidates = [result for result in results if result is not None]
 
         if not candidates:
             print("No candidates were successfully fetched.")
             return []
-        
-        # Sort the results by view count
+
         candidates.sort(key=lambda x: x[1], reverse=True)
-        
+
         print(f"\nTop {NB_ARTICLES_CLASSIFIER} articles by views:")
         for title, views in candidates[:NB_ARTICLES_CLASSIFIER]:
             print(f"  {title}: {views} views")
-        
+
         update_spinner_func("Sélection du meilleur titre...")
         time.sleep(0.2)
 
         titles = [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]]
         best_title = choose_title(titles, language)
-        
+
         print(f"\n~~~~ {best_title} ~~~~")
-        
-        update_spinner_func(f"Récupération de l'article...")
+
+        update_spinner_func("Récupération de l'article...")
         time.sleep(0.2)
-        
+
         article: WikipediaPage = fetch_wikipedia_content(best_title, language)
         article.text = extract_first_paragraphs(article.text)
-        
+
         if not article.text:
             return False
-        
+
         update_spinner_func("Préparation de l'IA tueuse...")
         time.sleep(0.2)
-        
+
         models_dir = "models"
         os.makedirs(models_dir, exist_ok=True)
 
@@ -98,7 +105,9 @@ async def load_game(language, update_spinner_func):
             model_path = f"{models_dir}/fasttext-{language}-mini"
 
             if not os.path.exists(model_path):
-                url = f"https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1"
+                url = (
+                    f"https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1"
+                )
                 r = requests.get(url)
                 with open(model_path, "wb") as f:
                     f.write(r.content)
@@ -112,31 +121,33 @@ async def load_game(language, update_spinner_func):
                 fasttext.util.download_model(language, if_exists="ignore")  # downloads to CWD
                 downloaded = f"cc.{language}.300.bin"
                 shutil.move(downloaded, local_path)
-                os.remove(f'cc.{language}.300.bin')
+                os.remove(f"cc.{language}.300.bin")
 
             model = fasttext.load_model(local_path)
 
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)
-        
+
         update_spinner_func("Finito !")
         time.sleep(0.2)
         return {
-            'article': article,
-            'article_words': article_words,
-            'title_words': title_words,
-            'model': model,
-            'wikipedia_choices': [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]]
+            "article": article,
+            "article_words": article_words,
+            "title_words": title_words,
+            "model": model,
+            "wikipedia_choices": [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]],
         }
-    
+
     except Exception as e:
         print(f"Error in load_game: {e}")
         traceback.print_exc()
         return False
-    
+
+
 def numeric_similarity(a: float, b: float, sigma: float = 5.0) -> float:
     """Compute a smooth similarity between two numbers"""
-    return math.exp(-((a - b) ** 2) / (2 * sigma ** 2))
+    return math.exp(-((a - b) ** 2) / (2 * sigma**2))
+
 
 def process_guess(guess: str, session_state: SessionState):
     """Logic to handle a guess including feedback and suggestions"""
@@ -144,7 +155,6 @@ def process_guess(guess: str, session_state: SessionState):
     if not guess:
         return
 
-    # Check for repeated guess
     if normalize_word(guess) in session_state.guesses:
         repeated = f"'<b>{guess}</b>' a déjà été proposé", "orange"
     else:
@@ -158,7 +168,6 @@ def process_guess(guess: str, session_state: SessionState):
     found_count = sum(1 for w in session_state.article_words if words_match(guess, w.word))
     updated_count = sum(1 for w in session_state.article_words if w.best_guess == guess)
 
-    # Suggest close word if not found
     if found_count == 0 and updated_count == 0:
         if re.fullmatch(r"\d+", guess.strip()):
             return f"'<b>{guess}</b>': 🟥", "red"
@@ -167,40 +176,40 @@ def process_guess(guess: str, session_state: SessionState):
         close_word = close_matches[0] if close_matches else None
 
         if close_word and close_word != guess:
-            # Handle the corrected guess
             handle_guess(close_word, session_state)
 
-            # Compute feedback for corrected word
-            found_close = sum(1 for w in session_state.article_words if words_match(close_word, w.word))
-            updated_close = sum(1 for w in session_state.article_words if w.best_guess == close_word)
+            found_close = sum(
+                1 for w in session_state.article_words if words_match(close_word, w.word)
+            )
+            updated_close = sum(
+                1 for w in session_state.article_words if w.best_guess == close_word
+            )
 
             if found_close > 0:
-                feedback = f"{'🟩'*found_close}{'🟧'*updated_close}"
+                feedback = f"{'🟩' * found_close}{'🟧' * updated_close}"
                 color = "green"
             elif updated_close > 0:
-                feedback = f"{'🟧'*updated_close}"
+                feedback = f"{'🟧' * updated_close}"
                 color = "orange"
             else:
-                feedback = f"🟥"
+                feedback = "🟥"
                 color = "red"
 
             session_state.guess_input = ""
-            return f"'<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}",color
+            return f"'<b>{guess}</b>' corrigé en '<b>{close_word}</b>' : {feedback}", color
 
         else:
             return f"'<b>{guess}</b>' : 🟥", "red"
 
-    # Provide normal feedback
     if found_count > 0:
-        return f"'<b>{guess}</b>': {'🟩'*found_count}{'🟧'*updated_count}", "green"
+        return f"'<b>{guess}</b>': {'🟩' * found_count}{'🟧' * updated_count}", "green"
     else:
-        return f"'<b>{guess}</b>': {'🟧'*updated_count}", "orange"
+        return f"'<b>{guess}</b>': {'🟧' * updated_count}", "orange"
+
 
 def handle_guess(guess: str, session_state: SessionState):
-    """Handle one word guess"""
     session_state.guesses.append(normalize_word(guess))
 
-    # Check if the guess matches any individual words
     for word_info in session_state.article_words:
         if words_match(guess, word_info.word):
             word_info.best_similarity = 1
@@ -223,13 +232,14 @@ def handle_guess(guess: str, session_state: SessionState):
                     word_info.best_similarity = similarity
                 max_similarity = max(max_similarity, similarity)
     else:
-        # Existing embedding-based logic
         guess_vec = embed_word(normalize_word(guess), session_state.model)
         if np.all(guess_vec == 0):
             # print(f"Warning: Zero word vector for guess: {guess}")
             pass
 
-        similar_results: List[SimilarityResult] = compute_similarity(guess_vec, session_state.article_words, session_state.revealed)
+        similar_results: List[SimilarityResult] = compute_similarity(
+            guess_vec, session_state.article_words, session_state.revealed
+        )
 
         for result in similar_results:
             word_info = session_state.article_words[result.index]
@@ -237,6 +247,5 @@ def handle_guess(guess: str, session_state: SessionState):
                 word_info.best_guess = guess
                 word_info.best_similarity = result.similarity
 
-    # Check victory
     if all(w in session_state.revealed for w in [w.normalized for w in session_state.title_words]):
         session_state.game_won = True

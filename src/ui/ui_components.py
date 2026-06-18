@@ -1,4 +1,3 @@
-
 def get_language_button():
     return """
         <style>
@@ -11,12 +10,14 @@ def get_language_button():
         </style>
     """
 
+
 def get_main_menu_text():
     return """
         <h1 style='text-align: center; margin-bottom: 20px;'>
             Choisis une langue pour jouer :
         </h1>
     """
+
 
 def get_spinner_effect(status_text: str):
     return f"""
@@ -60,6 +61,7 @@ def get_spinner_effect(status_text: str):
         </div>
     """
 
+
 def get_winner_style():
     return """
         <style>
@@ -95,6 +97,7 @@ def get_winner_style():
         }
     """
 
+
 def get_winner_bar(title: str, nb_guesses: int, url: str):
     return f"""
         <div class="winbar">
@@ -103,6 +106,7 @@ def get_winner_bar(title: str, nb_guesses: int, url: str):
             <a class="wiki" href="{url}" target="_blank">Voir sur Wikipédia</a>
         </div>
     """
+
 
 def get_text_input():
     return """
@@ -140,6 +144,7 @@ def get_text_input():
             }
             </style>
             """
+
 
 def get_keyboard_focus():
     return r"""<script>
@@ -206,6 +211,7 @@ def get_keyboard_focus():
         </script>
     """
 
+
 def get_guess_feedback(color, content):
     return f"""
         <style>
@@ -231,6 +237,7 @@ def get_guess_feedback(color, content):
             <p style='color:{color}'>{content}</p>
         </div>
     """
+
 
 def get_main_menu_button():
     return """

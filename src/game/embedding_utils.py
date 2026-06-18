@@ -1,52 +1,50 @@
-from typing import List, Tuple, Optional
 import unicodedata
+from typing import List, Optional, Tuple
+
 import numpy as np
 import regex
 
+from classes import SimilarityResult, WordInfo
 from config import SIMILARITY_THRESHOLD
-from classes import WordInfo, SimilarityResult
 
 
 def normalize_word(word: str) -> str:
     """Put word to normalized format (no accent, no capital letter)"""
     word = word.lower().strip()
-    return ''.join(c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn')
+    return "".join(c for c in unicodedata.normalize("NFD", word) if unicodedata.category(c) != "Mn")
+
 
 def get_vector(model, word):
     if hasattr(model, "get_word_vector"):
         return model.get_word_vector(word)  # classic fasttext
     return model[word]  # compressed
 
-def tokenize_text(text: str, model) -> List['WordInfo']:
+
+def tokenize_text(text: str, model) -> List["WordInfo"]:
     """Transform words to WordInfo objects, computing embeddings in batch, keeping accented Latin letters"""
-    
-    # Word Matching and Filtering
-    # Match any Latin letter (including accents) and digits
-    pattern = r'\b[\p{Latin}0-9]+\b'
+    pattern = r"\b[\p{Latin}0-9]+\b"
     matches = [m for m in regex.finditer(pattern, text)]
-    
+
     words = []
     filtered_words = []
     filtered_indices: List[Tuple[int, int]] = []
-    
-    # Preprocess words and filter out those with underscores
+
     for m in matches:
         word = m.group().replace("œ", "oe").replace("Œ", "Oe")
         if "_" not in word:
             filtered_words.append(word)
             filtered_indices.append((m.start(), m.end()))
-    
-    # Batch Compute Embeddings
+
     if not filtered_words:
         return []
     embeddings = np.array([get_vector(model, word) for word in filtered_words])
-    
-    # Build WordInfo objects
+
     for i, word in enumerate(filtered_words):
         start, end = filtered_indices[i]
         words.append(WordInfo(word, embeddings[i], normalize_word(word), start, end))
-    
+
     return words
+
 
 def words_match(guess: Optional[str], target: Optional[str]) -> bool:
     """Check if two words match"""
@@ -56,15 +54,15 @@ def words_match(guess: Optional[str], target: Optional[str]) -> bool:
     guess_norm, target_norm = normalize_word(guess), normalize_word(target)
     if guess_norm == target_norm:
         return True
-    # Simple plural handling
-    for suffix in ['s', 'es', 'x']:
-        if guess_norm.endswith(suffix) and guess_norm[:-len(suffix)] == target_norm:
+    for suffix in ["s", "es", "x"]:
+        if guess_norm.endswith(suffix) and guess_norm[: -len(suffix)] == target_norm:
             return True
-        if target_norm.endswith(suffix) and target_norm[:-len(suffix)] == guess_norm:
+        if target_norm.endswith(suffix) and target_norm[: -len(suffix)] == guess_norm:
             return True
     return False
 
-def embed_word(text:str, model) -> np.ndarray:
+
+def embed_word(text: str, model) -> np.ndarray:
     """Transform a word into an embedding"""
     words = text.split()
     vectors = []
@@ -75,7 +73,10 @@ def embed_word(text:str, model) -> np.ndarray:
     else:
         return np.zeros(300)
 
-def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo], revealed: List[str]) -> List[SimilarityResult]:
+
+def compute_similarity(
+    guess_vec: np.ndarray, words: List[WordInfo], revealed: List[str]
+) -> List[SimilarityResult]:
     """Compute similarity between the guess vector and the words from the text"""
     similarities: List[SimilarityResult] = []
 
@@ -98,7 +99,9 @@ def compute_similarity(guess_vec: np.ndarray, words: List[WordInfo], revealed: L
             else:
                 similarity = np.dot(guess_vec, word_vec) / (guess_norm * word_norm)
 
-        similarities.append(SimilarityResult(word=word_info.word, similarity=float(similarity), index=idx))
+        similarities.append(
+            SimilarityResult(word=word_info.word, similarity=float(similarity), index=idx)
+        )
 
     similarities.sort(key=lambda x: x.similarity, reverse=True)
 
