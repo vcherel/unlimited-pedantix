@@ -3,11 +3,10 @@ import json
 import os
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 import ui.ui_components as ui
 from classes import SessionState
-from game.game_logic import load_game, process_guess
+from game.game_logic import load_game, process_guess, warmup_imports
 from ui.display_article import display_article
 
 
@@ -34,6 +33,10 @@ def main():
     st.set_page_config(page_title="Pedantix Illimité", page_icon="🎮", layout="wide")
 
     if state.language is None:
+        # Preload heavy ML imports in the background while the user picks a
+        # language, so the first game load doesn't stall on them.
+        warmup_imports()
+
         st.markdown(ui.get_language_button(), unsafe_allow_html=True)
         st.markdown("<div style='margin-top: 20vh;'></div>", unsafe_allow_html=True)
         _, col_center, _ = st.columns([1, 2, 1])
@@ -158,8 +161,10 @@ def main():
             "input", key="guess_input", label_visibility="collapsed", on_change=on_guess_change
         )
 
-        # JavaScript to auto-focus and capture keyboard input
-        components.html(ui.get_keyboard_focus(), height=0)
+        # JavaScript to auto-focus and capture keyboard input. Rendered inline
+        # (not iframed) so the script reaches the Streamlit input directly;
+        # st.components.v1.html is deprecated.
+        st.html(ui.get_keyboard_focus(), unsafe_allow_javascript=True)
 
         st.markdown(
             ui.get_guess_feedback(state.feedback_color, state.feedback_content),

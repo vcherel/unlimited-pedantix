@@ -2,12 +2,15 @@ import hashlib
 import json
 import os
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 
+import joblib
 import numpy as np
 import xgboost as xgb
 from imblearn.over_sampling import SMOTE
 from sentence_transformers import SentenceTransformer
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, fbeta_score
@@ -107,13 +110,13 @@ class LogisticRegressionModel(BaseModel):
     def create_model(self):
         if self.use_smote:
             return LogisticRegression(
-                max_iter=1000, C=1.0, penalty="l2", solver="liblinear", random_state=42
+                max_iter=1000, C=1.0, l1_ratio=0, solver="liblinear", random_state=42
             )
         else:
             return LogisticRegression(
                 max_iter=1000,
                 C=0.8,
-                penalty="l2",
+                l1_ratio=0,
                 class_weight="balanced",
                 solver="liblinear",
                 random_state=42,
@@ -123,15 +126,13 @@ class LogisticRegressionModel(BaseModel):
 class SVMModel(BaseModel):
     def create_model(self):
         if self.use_smote:
-            return SVC(kernel="rbf", C=1.0, gamma="scale", probability=True, random_state=42)
+            return CalibratedClassifierCV(
+                SVC(kernel="rbf", C=1.0, gamma="scale", random_state=42), ensemble=False
+            )
         else:
-            return SVC(
-                kernel="rbf",
-                C=0.8,
-                gamma="scale",
-                class_weight="balanced",
-                probability=True,
-                random_state=42,
+            return CalibratedClassifierCV(
+                SVC(kernel="rbf", C=0.8, gamma="scale", class_weight="balanced", random_state=42),
+                ensemble=False,
             )
 
 
@@ -254,6 +255,7 @@ def prepare_data(records, language):
     return X, y, sentence_model
 
 
+@lru_cache(maxsize=2)
 def load_model(language):
     if language == "fr":
         return SentenceTransformer("sentence-transformers/distiluse-base-multilingual-cased-v2")
@@ -304,25 +306,46 @@ def train_models(nb_iter=100, language="fr", use_smote=True):
         print(f"{name:30} : {avg * 100:.1f}% ± {std * 100:.1f}%")
 
 
+def _dataset_hash(records: list) -> str:
+    return hashlib.md5(json.dumps(records, sort_keys=True).encode()).hexdigest()
+
+
+def _score_titles(clf, sentence_model, titles):
+    embeddings = np.array([sentence_model.encode(title) for title in titles])
+    scores = clf.predict_proba(embeddings)[:, 1]
+    for i, score in enumerate(scores):
+        if score > SCORE_THRESHOLD:
+            return titles[i]
+    return titles[scores.argmax()]
+
+
 def choose_title(titles, language, use_smote=True):
-    """Train models, pick the best one, show one example, score the results"""
-    print("\nLoading dataset...")
+    """Pick the best article title using a trained classifier, retrained only when data changes."""
     with open(Path("data/dataset.json"), "r", encoding="utf-8") as f:
         records = json.load(f)
 
-    if not records:
-        return
-    else:
-        records = records[language]
+    records = records.get(language, []) if records else []
 
     nb_pos = sum(1 for r in records if r["score"])
     nb_neg = sum(1 for r in records if not r["score"])
     if nb_pos < 6 or nb_neg < 6:
-        print("Warning: Not enough data in the dataset: taking best one")
+        print("Not enough data in dataset: taking best article by views")
         return titles[0]
 
-    X, y, sentence_model = prepare_data(records, language)
+    models_dir = Path("models")
+    models_dir.mkdir(exist_ok=True)
+    clf_path = models_dir / f"classifier_{language}.joblib"
+    hash_path = models_dir / f"classifier_{language}_hash.txt"
 
+    current_hash = _dataset_hash(records)
+    sentence_model = load_model(language)
+
+    if clf_path.exists() and hash_path.exists() and hash_path.read_text().strip() == current_hash:
+        print("Loading saved classifier...")
+        clf = joblib.load(clf_path)
+        return _score_titles(clf, sentence_model, titles)
+
+    X, y, _ = prepare_data(records, language)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     if use_smote:
@@ -339,18 +362,17 @@ def choose_title(titles, language, use_smote=True):
         print(f"{name:30} : {f2 * 100:.1f}%")
 
     print(f"\n~~~~~ Best model: {best_model.name} ~~~~~")
-    y_pred = best_model.predict(X_test)
     print(
         classification_report(
-            y_test, y_pred, labels=[1, 0], target_names=["Good", "Bad"], zero_division=0
+            y_test,
+            best_model.predict(X_test),
+            labels=[1, 0],
+            target_names=["Good", "Bad"],
+            zero_division=0,
         )
     )
 
-    embeddings = np.array([sentence_model.encode(title) for title in titles])
-    scores = best_model.predict_proba(embeddings)[:, 1]
+    joblib.dump(best_model.model, clf_path)
+    hash_path.write_text(current_hash)
 
-    for i, score in enumerate(scores):
-        if score > SCORE_THRESHOLD:
-            return titles[i]
-
-    return titles[scores.argmax()]
+    return _score_titles(best_model.model, sentence_model, titles)

@@ -6,19 +6,17 @@ import math
 import os
 import re
 import shutil
+import threading
 import time
 import traceback
 from typing import TYPE_CHECKING, List
 
 import aiohttp
-import fasttext
-import fasttext.util
 import numpy as np
 import requests
-from compress_fasttext.models import CompressedFastTextKeyedVectors
+import streamlit as st
 
 from config import NB_ARTICLES, NB_ARTICLES_CLASSIFIER, USE_COMPRESSED_MODEL
-from game.classifier import choose_title
 from game.embedding_utils import (
     compute_similarity,
     embed_word,
@@ -29,7 +27,7 @@ from game.embedding_utils import (
 from game.wiki_api import (
     extract_first_paragraphs,
     fetch_page_views,
-    fetch_random_title,
+    fetch_random_titles,
     fetch_wikipedia_content,
 )
 
@@ -38,22 +36,77 @@ if TYPE_CHECKING:
     from game.embedding_utils import SimilarityResult
 
 
-async def fetch_candidate(session: aiohttp.ClientSession, language: str) -> tuple[str, int] | None:
-    """Asynchronously fetch one wikipedia article title and its views."""
-    try:
-        title = await fetch_random_title(session, language)
-        views = await fetch_page_views(session, language, title)
+_warmup_started = False
+_warmup_lock = threading.Lock()
 
-        if views > 0:
-            return title, views
-        return None
-    except aiohttp.ClientError as e:
-        print(f"Client error for a candidate: {e}")
-        return None
-    except Exception as e:
-        print(f"Unexpected error for a candidate: {e}")
-        traceback.print_exc()
-        return None
+
+def warmup_imports():
+    """Preload the heavy ML imports (sentence-transformers, xgboost,
+    compress_fasttext — ~7s) in a background thread while the user is on the
+    language menu, so the first game load doesn't pay that cost.
+
+    Runs at most once per process. Only warms imports, not the language-specific
+    models, and never touches Streamlit APIs (no ScriptRunContext in the thread).
+    """
+    global _warmup_started
+    with _warmup_lock:
+        if _warmup_started:
+            return
+        _warmup_started = True
+
+    def _run():
+        try:
+            import compress_fasttext.models  # noqa: F401
+
+            import game.classifier  # noqa: F401  (pulls in sentence_transformers, xgboost, ...)
+        except Exception as e:
+            print(f"Warmup import failed: {e}")
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+@st.cache_resource
+def _load_fasttext_model(language: str):
+    # Heavy imports are deferred to keep app startup fast (see load_game).
+    from compress_fasttext.models import CompressedFastTextKeyedVectors
+
+    models_dir = "models"
+    os.makedirs(models_dir, exist_ok=True)
+
+    if USE_COMPRESSED_MODEL:
+        model_path = f"{models_dir}/fasttext-{language}-mini"
+        if not os.path.exists(model_path):
+            url = f"https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1"
+            r = requests.get(url)
+            with open(model_path, "wb") as f:
+                f.write(r.content)
+        return CompressedFastTextKeyedVectors.load(model_path)
+    else:
+        import fasttext
+        import fasttext.util
+
+        local_path = f"{models_dir}/cc.{language}.300.bin"
+        if not os.path.exists(local_path):
+            fasttext.util.download_model(language, if_exists="ignore")
+            shutil.move(f"cc.{language}.300.bin", local_path)
+        return fasttext.load_model(local_path)
+
+
+async def fetch_views_for_title(
+    session: aiohttp.ClientSession, language: str, title: str, semaphore: asyncio.Semaphore
+) -> tuple[str, int] | None:
+    """Fetch page views for a single title, rate-limited by semaphore."""
+    async with semaphore:
+        try:
+            views = await fetch_page_views(session, language, title)
+            return (title, views) if views > 0 else None
+        except aiohttp.ClientError as e:
+            print(f"Client error for a candidate: {e}")
+            return None
+        except Exception as e:
+            print(f"Unexpected error for a candidate: {e}")
+            traceback.print_exc()
+            return None
 
 
 async def load_game(language, update_spinner_func):
@@ -62,11 +115,12 @@ async def load_game(language, update_spinner_func):
         update_spinner_func("Récupération d'articles aléatoires...")
         time.sleep(0.2)
 
-        # Use a single session for all requests for connection pooling
         async with aiohttp.ClientSession() as session:
-            tasks = [fetch_candidate(session, language) for _ in range(NB_ARTICLES)]
+            titles = await fetch_random_titles(session, language, NB_ARTICLES)
+            semaphore = asyncio.Semaphore(10)
+            tasks = [fetch_views_for_title(session, language, t, semaphore) for t in titles]
             results = await asyncio.gather(*tasks)
-            candidates = [result for result in results if result is not None]
+            candidates = [r for r in results if r is not None]
 
         if not candidates:
             print("No candidates were successfully fetched.")
@@ -80,6 +134,10 @@ async def load_game(language, update_spinner_func):
 
         update_spinner_func("Sélection du meilleur titre...")
         time.sleep(0.2)
+
+        # Imported lazily: pulls in sentence-transformers/xgboost (~7s), only
+        # needed once a game is actually loaded, not on the startup menu.
+        from game.classifier import choose_title
 
         titles = [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]]
         best_title = choose_title(titles, language)
@@ -98,32 +156,7 @@ async def load_game(language, update_spinner_func):
         update_spinner_func("Préparation de l'IA tueuse...")
         time.sleep(0.2)
 
-        models_dir = "models"
-        os.makedirs(models_dir, exist_ok=True)
-
-        if USE_COMPRESSED_MODEL:
-            model_path = f"{models_dir}/fasttext-{language}-mini"
-
-            if not os.path.exists(model_path):
-                url = (
-                    f"https://zenodo.org/records/4905385/files/fasttext-{language}-mini?download=1"
-                )
-                r = requests.get(url)
-                with open(model_path, "wb") as f:
-                    f.write(r.content)
-
-            model = CompressedFastTextKeyedVectors.load(model_path)
-
-        else:
-            local_path = f"{models_dir}/cc.{language}.300.bin"
-
-            if not os.path.exists(local_path):
-                fasttext.util.download_model(language, if_exists="ignore")  # downloads to CWD
-                downloaded = f"cc.{language}.300.bin"
-                shutil.move(downloaded, local_path)
-                os.remove(f"cc.{language}.300.bin")
-
-            model = fasttext.load_model(local_path)
+        model = _load_fasttext_model(language)
 
         article_words = tokenize_text(article.text, model)
         title_words = tokenize_text(article.title, model)

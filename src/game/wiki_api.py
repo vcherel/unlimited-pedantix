@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
@@ -9,17 +10,31 @@ from bs4 import BeautifulSoup
 from classes import WikipediaPage
 from config import EXCLUDE_STARTS, MIN_WORDS, NB_DAYS
 
-headers = {"User-Agent": "PedantixGame/1.0"}
+# Wikimedia's User-Agent policy rate-limits generic agents more aggressively,
+# so we identify the app with a contact URL as recommended.
+headers = {
+    "User-Agent": (
+        "UnlimitedPedantix/1.0 (https://github.com/unlimited-pedantix; offline Pedantix clone)"
+    )
+}
 
 
-async def fetch_random_title(session: aiohttp.ClientSession, language: str) -> str:
-    """Fetch a random Wikipedia page title asynchronously for a given language."""
-    url = f"https://{language}.wikipedia.org/api/rest_v1/page/random/summary"
-
-    async with session.get(url, headers=headers) as response:
+async def fetch_random_titles(
+    session: aiohttp.ClientSession, language: str, count: int
+) -> list[str]:
+    """Fetch multiple random Wikipedia page titles in a single API call (max 500)."""
+    url = f"https://{language}.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "list": "random",
+        "rnnamespace": "0",
+        "rnlimit": str(min(count, 500)),
+        "format": "json",
+    }
+    async with session.get(url, params=params, headers=headers) as response:
         response.raise_for_status()
         data = await response.json()
-        return data["title"]
+        return [page["title"] for page in data["query"]["random"]]
 
 
 async def fetch_page_views(session: aiohttp.ClientSession, language: str, title: str) -> int:
@@ -44,11 +59,22 @@ async def fetch_page_views(session: aiohttp.ClientSession, language: str, title:
         return 0
 
 
-def fetch_wikipedia_content(title, language):
-    """Fetch the HTML content of a Wikipedia page"""
+def fetch_wikipedia_content(title, language, max_retries=4):
+    """Fetch the HTML content of a Wikipedia page, retrying on rate limits (429)."""
     url = f"https://{language}.wikipedia.org/w/api.php"
     params = {"action": "parse", "format": "json", "page": title, "prop": "text", "redirects": 1}
-    response = requests.get(url, params=params, headers=headers)
+
+    for attempt in range(max_retries):
+        response = requests.get(url, params=params, headers=headers)
+        if response.status_code == 429 and attempt < max_retries - 1:
+            # Respect Retry-After if provided, else exponential backoff.
+            retry_after = response.headers.get("Retry-After")
+            wait = float(retry_after) if retry_after else 2**attempt
+            print(f"Rate limited (429) on '{title}', retrying in {wait:.1f}s...")
+            time.sleep(wait)
+            continue
+        break
+
     response.raise_for_status()
     data = response.json()
 
