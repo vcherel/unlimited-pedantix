@@ -37,6 +37,28 @@ async def fetch_random_titles(
         return [page["title"] for page in data["query"]["random"]]
 
 
+def search_wikipedia_titles(query: str, language: str, limit: int = 10) -> list[str]:
+    """Autocomplete: return real page titles matching a partial query (opensearch API)."""
+    query = query.strip()
+    if not query:
+        return []
+    url = f"https://{language}.wikipedia.org/w/api.php"
+    params = {
+        "action": "opensearch",
+        "search": query,
+        "limit": str(limit),
+        "namespace": "0",
+        "format": "json",
+    }
+    try:
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        # opensearch returns [query, [titles], [descriptions], [urls]]
+        return response.json()[1]
+    except Exception:
+        return []
+
+
 async def fetch_page_views(session: aiohttp.ClientSession, language: str, title: str) -> int:
     """Get total page views in the last NB_DAYS days for a Wikipedia page asynchronously."""
     try:

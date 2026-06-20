@@ -17,6 +17,7 @@ dependencies = [
     "imbalanced-learn",
     "sentence-transformers",
     "torchvision>=0.27.1",
+    "streamlit-searchbox>=0.1.24",
 ]
 
 [tool.ruff]

@@ -36,6 +36,8 @@ class WordInfo:
 
 class SessionState:
     _defaults: Dict[str, Any] = {
+        "phase": "language",  # Current screen: language | mode | choose | play
+        "batch_titles": [],  # Random batch titles offered in the pass-and-play chooser
         "language": None,  # The language we play the game with ('en' or 'fr')
         "all_words": [],  # List of all words in the language
         "article": None,  # The fetched article (WikipediaPage type)
@@ -63,6 +65,13 @@ class SessionState:
     def _set(self, key: str, value: Any):
         st.session_state[key] = value
 
+    phase: str = property(
+        lambda self: cast(str, self._get("phase")), lambda self, v: self._set("phase", v)
+    )
+    batch_titles: List[str] = property(
+        lambda self: cast(List[str], self._get("batch_titles")),
+        lambda self, v: self._set("batch_titles", v),
+    )
     language: Optional[str] = property(
         lambda self: self._get("language"), lambda self, v: self._set("language", v)
     )

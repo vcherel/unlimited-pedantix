@@ -109,24 +109,63 @@ async def fetch_views_for_title(
             return None
 
 
-async def load_game(language, update_spinner_func):
-    """Choose the wikipedia article for the game"""
-    try:
+async def fetch_ranked_candidates(language, update_spinner_func=None):
+    """Fetch a random batch of articles and rank them by recent page views."""
+    if update_spinner_func:
         update_spinner_func("Récupération d'articles aléatoires...")
         time.sleep(0.2)
 
-        async with aiohttp.ClientSession() as session:
-            titles = await fetch_random_titles(session, language, NB_ARTICLES)
-            semaphore = asyncio.Semaphore(10)
-            tasks = [fetch_views_for_title(session, language, t, semaphore) for t in titles]
-            results = await asyncio.gather(*tasks)
-            candidates = [r for r in results if r is not None]
+    async with aiohttp.ClientSession() as session:
+        titles = await fetch_random_titles(session, language, NB_ARTICLES)
+        semaphore = asyncio.Semaphore(10)
+        tasks = [fetch_views_for_title(session, language, t, semaphore) for t in titles]
+        results = await asyncio.gather(*tasks)
+        candidates = [r for r in results if r is not None]
+
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    return candidates
+
+
+def build_game_from_title(title, language, update_spinner_func=None):
+    """Fetch and prepare a playable game for a specific Wikipedia title.
+
+    Returns the game dict, or None if the page has no usable text. Used by both
+    the solo (classifier-picked) and pass-and-play (human-picked) flows.
+    """
+    if update_spinner_func:
+        update_spinner_func("Récupération de l'article...")
+        time.sleep(0.2)
+
+    article: WikipediaPage = fetch_wikipedia_content(title, language)
+    article.text = extract_first_paragraphs(article.text)
+
+    if not article.text:
+        return None
+
+    if update_spinner_func:
+        update_spinner_func("Préparation de l'IA tueuse...")
+        time.sleep(0.2)
+
+    model = _load_fasttext_model(language)
+    article_words = tokenize_text(article.text, model)
+    title_words = tokenize_text(article.title, model)
+
+    return {
+        "article": article,
+        "article_words": article_words,
+        "title_words": title_words,
+        "model": model,
+    }
+
+
+async def load_game(language, update_spinner_func):
+    """Solo mode: pick the best article from a random batch via the classifier."""
+    try:
+        candidates = await fetch_ranked_candidates(language, update_spinner_func)
 
         if not candidates:
             print("No candidates were successfully fetched.")
             return []
-
-        candidates.sort(key=lambda x: x[1], reverse=True)
 
         print(f"\nTop {NB_ARTICLES_CLASSIFIER} articles by views:")
         for title, views in candidates[:NB_ARTICLES_CLASSIFIER]:
@@ -144,32 +183,15 @@ async def load_game(language, update_spinner_func):
 
         print(f"\n~~~~ {best_title} ~~~~")
 
-        update_spinner_func("Récupération de l'article...")
-        time.sleep(0.2)
-
-        article: WikipediaPage = fetch_wikipedia_content(best_title, language)
-        article.text = extract_first_paragraphs(article.text)
-
-        if not article.text:
+        game = build_game_from_title(best_title, language, update_spinner_func)
+        if not game:
             return False
 
-        update_spinner_func("Préparation de l'IA tueuse...")
-        time.sleep(0.2)
-
-        model = _load_fasttext_model(language)
-
-        article_words = tokenize_text(article.text, model)
-        title_words = tokenize_text(article.title, model)
+        game["wikipedia_choices"] = titles
 
         update_spinner_func("Finito !")
         time.sleep(0.2)
-        return {
-            "article": article,
-            "article_words": article_words,
-            "title_words": title_words,
-            "model": model,
-            "wikipedia_choices": [t for t, _ in candidates[:NB_ARTICLES_CLASSIFIER]],
-        }
+        return game
 
     except Exception as e:
         print(f"Error in load_game: {e}")
