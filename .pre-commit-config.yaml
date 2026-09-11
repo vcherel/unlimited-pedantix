@@ -5,3 +5,11 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: strip-ai-trailers
+        name: strip Claude-Session and co-author trailers from the commit message
+        entry: sed -i -e '/^Claude-Session:/d' -e '/^Co-Authored-By:/d' -e '/^Generated with/d'
+        language: system
+        stages: [commit-msg]
